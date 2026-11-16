@@ -120,7 +120,7 @@
 
   Verificar: `openspec validate migrar-para-pwa --strict` passa e os comandos documentados funcionam num clone limpo (`npm ci && npm test && npm run build`).
   - **Andamento (16/11/2026):** criado o `README.md` deste repositório (não existia) e atualizado o `CLAUDE.md`. No repositório Delphi foi criado o `README.md` com o aviso, ainda sem commit lá. `openspec validate --strict` passa e, num clone limpo com estas mudanças, `npm ci`, `npm test` (266 testes) e `npm run build` passam.
-- [ ] 5.5 **Validação final no celular — ponto de parada.** Nos dois aparelhos:
+- [x] 5.5 **Validação final no celular — ponto de parada.** Nos dois aparelhos:
   - exportar o backup e salvar ou compartilhar o arquivo;
   - excluir todas as listas;
   - importar o arquivo e conferir listas, itens, marcações e totais;
@@ -128,3 +128,4 @@
   - tentar importar uma foto.
 
   Com o OK do usuário, a change fica pronta para arquivar.
+  - **Validado (16/11/2026):** OK do usuário no celular para o roteiro da etapa, na versão `26.11.3`.
