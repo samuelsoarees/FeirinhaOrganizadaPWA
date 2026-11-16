@@ -54,6 +54,14 @@ export class RepositorioItens {
     })
   }
 
+  // Grava só a marcação de concluído. Descrição, quantidade, valor e posição de inclusão (id) ficam como estão.
+  async marcar(id: number, concluido: boolean): Promise<void> {
+    await protegido('marcar', async () => {
+      const alterados = await this.banco.itens.update(id, { concluido: concluido ? 1 : 0 })
+      if (alterados === 0) throw erroItemNaoEncontrado()
+    })
+  }
+
   async excluir(id: number): Promise<void> {
     await protegido('excluir', () =>
       this.banco.transaction('rw', this.banco.itens, async () => {

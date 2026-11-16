@@ -56,6 +56,30 @@ describe('App', () => {
     expect(window.history.length).toBe(tamanho)
   })
 
+  it('voltar do detalhe mostra os totais atualizados no card', async () => {
+    const { listas, itens } = repositoriosPadrao()
+    const id = await listas.inserir('Feira do sábado')
+    const tomate = await itens.inserir(id, { descricao: 'Tomate', quantidade: 6, valorUnitarioCentavos: 120 })
+    await itens.marcar(tomate, true)
+    await itens.inserir(id, { descricao: 'Pimentão', quantidade: 3, valorUnitarioCentavos: 200 })
+    window.location.hash = '#/'
+    render(<App />)
+
+    const card = await screen.findByRole('button', { name: /^Feira do sábado/ })
+    expect(card).toHaveTextContent('1 de 2 itens')
+    expect(card).toHaveTextContent('R$ 7,20')
+
+    fireEvent.click(card)
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Marcar Pimentão como concluído' }))
+    await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Marcar Pimentão como concluído' })).toBeChecked())
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }))
+
+    expect(await screen.findByRole('heading', { name: 'Minhas Listas' })).toBeInTheDocument()
+    const atualizado = await screen.findByRole('button', { name: /^Feira do sábado/ })
+    await waitFor(() => expect(atualizado).toHaveTextContent('2 de 2 itens'))
+    expect(atualizado).toHaveTextContent('R$ 13,20')
+  })
+
   it('pelo endereço de uma lista excluída avisa e mostra Listas ao fechar', async () => {
     window.location.hash = '#/lista/999'
     render(<App />)

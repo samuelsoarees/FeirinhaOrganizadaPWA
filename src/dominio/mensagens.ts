@@ -95,6 +95,8 @@ export const Mensagens = {
     naoEncontrado: 'Este item não existe mais. Atualizamos a tela para você.',
     falhaSalvar: 'Não foi possível salvar o item. Tente novamente.',
     falhaExcluir: 'Não foi possível excluir o item. Tente novamente.',
+    falhaMarcar: 'Não foi possível marcar o item. Tente novamente.',
+    marcarComoConcluido: (descricao: string) => `Marcar ${descricao} como concluído`,
   },
   instalacao: {
     instalarApp: 'Instalar app',

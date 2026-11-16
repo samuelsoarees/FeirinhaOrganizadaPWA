@@ -22,7 +22,7 @@ export class ErroNaoEncontrado extends Error {
   }
 }
 
-export type OperacaoArmazenamento = 'listar' | 'salvar' | 'excluir'
+export type OperacaoArmazenamento = 'listar' | 'salvar' | 'excluir' | 'marcar'
 
 // Falha técnica do banco. A tela nunca mostra o texto técnico, só a mensagem genérica da operação.
 export class ErroArmazenamento extends Error {

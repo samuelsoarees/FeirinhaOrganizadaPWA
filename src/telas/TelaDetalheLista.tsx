@@ -8,12 +8,13 @@ import { useOperacao } from '../componentes/useOperacao'
 import { useRepositorios } from '../componentes/useRepositorios'
 import { ErroNaoEncontrado } from '../dominio/erros'
 import { formatarReais } from '../dominio/formatacao'
-import { progressoConcluido, textoResumoRodape, type DadosItem, type Item } from '../dominio/itens'
+import { ordenarItens, progressoConcluido, textoResumoRodape, type DadosItem, type Item } from '../dominio/itens'
 import { resumirItens, type Lista } from '../dominio/listas'
 import { Mensagens } from '../dominio/mensagens'
 import { usePilhaCamadas } from '../navegacao/camadas'
 import { voltarParaListas } from '../navegacao/rotas'
 import { LinhaItem } from './LinhaItem'
+import { useAnimacaoFlip } from './useAnimacaoFlip'
 import './TelaDetalheLista.css'
 
 type EstadoTela =
@@ -153,6 +154,32 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
     // Falha técnica: o item continua na tela (e o painel, se a exclusão veio dele).
   }
 
+  // Grava na hora, sem abrir o painel. A tela só troca o marcador depois que o banco confirmou:
+  // numa falha, o "Ops!" aparece e o item continua como estava. Enquanto grava, outros toques
+  // ficam bloqueados, então a tela nunca mostra uma marcação diferente da que está no banco.
+  const marcarItem = async (item: Item) => {
+    if (ignorarCliqueNaLinha.current) {
+      ignorarCliqueNaLinha.current = false
+      return
+    }
+    const concluido = !item.concluido
+    const resultado = await executar(() => repositorios.itens.marcar(item.id, concluido), {
+      mensagemFalha: Mensagens.itens.falhaMarcar,
+    })
+    if (resultado.status === 'ok') {
+      setEstado((atual) =>
+        atual.fase === 'pronta'
+          ? {
+              ...atual,
+              itens: ordenarItens(atual.itens.map((outro) => (outro.id === item.id ? { ...outro, concluido } : outro))),
+            }
+          : atual,
+      )
+    } else if (resultado.status === 'erro' && resultado.erro instanceof ErroNaoEncontrado) {
+      await tratarNaoEncontrado(resultado.erro, resultado.dialogFechado)
+    }
+  }
+
   const abrirRenomear = () => {
     flushSync(() => setRenomeando(true))
   }
@@ -178,6 +205,8 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
   const pendentes = itens.filter((item) => !item.concluido)
   const concluidos = itens.filter((item) => item.concluido)
   const totais = resumirItens(itens)
+  const listaItens = useRef<HTMLUListElement>(null)
+  useAnimacaoFlip(listaItens, itens)
 
   const linha = (item: Item) => (
     <LinhaItem
@@ -187,6 +216,7 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
       aoRevelar={aoRevelar}
       aoEditar={abrirEdicao}
       aoExcluir={(alvo) => void excluirItem(alvo)}
+      aoMarcar={(alvo) => void marcarItem(alvo)}
     />
   )
 
@@ -212,9 +242,9 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
 
       {estado.fase === 'pronta' && itens.length > 0 && (
         <div className="itens" data-rolagem>
-          <ul className="itens-lista">
+          <ul className="itens-lista" ref={listaItens}>
             {pendentes.map(linha)}
-            {concluidos.length > 0 && <li className="itens-grupo">{Mensagens.detalhe.concluidos(concluidos.length)}</li>}
+            {concluidos.length > 0 && <li className="itens-grupo" data-flip="grupo">{Mensagens.detalhe.concluidos(concluidos.length)}</li>}
             {concluidos.map(linha)}
           </ul>
         </div>

@@ -161,6 +161,74 @@ describe('excluir item', () => {
   })
 })
 
+describe('marcar e desmarcar item', () => {
+  it('marcar grava só o concluído, com os mesmos dados de antes', async () => {
+    const id = await repositorios.itens.inserir(idLista, { descricao: 'Pimentão', quantidade: 3, valorUnitarioCentavos: 200 })
+    const antes = await banco.itens.get(id)
+
+    await repositorios.itens.marcar(id, true)
+
+    expect(await banco.itens.get(id)).toEqual({ ...antes, concluido: 1 })
+  })
+
+  it('desmarcar grava não concluído', async () => {
+    const id = await repositorios.itens.inserir(idLista, { descricao: 'Tomate', quantidade: 6, valorUnitarioCentavos: 120 })
+    await repositorios.itens.marcar(id, true)
+    await repositorios.itens.marcar(id, false)
+    expect((await banco.itens.get(id))?.concluido).toBe(0)
+  })
+
+  it('marcar duas vezes o mesmo valor não é erro', async () => {
+    const id = await repositorios.itens.inserir(idLista, banana)
+    await repositorios.itens.marcar(id, true)
+    await expect(repositorios.itens.marcar(id, true)).resolves.toBeUndefined()
+  })
+
+  it('desmarcar volta o item à posição de inclusão entre os pendentes', async () => {
+    const abacaxi = await repositorios.itens.inserir(idLista, { ...banana, descricao: 'Abacaxi' })
+    await repositorios.itens.inserir(idLista, { ...banana, descricao: 'Pimentão' })
+    await repositorios.itens.inserir(idLista, { ...banana, descricao: 'Tomate' })
+
+    await repositorios.itens.marcar(abacaxi, true)
+    expect((await repositorios.itens.listar(idLista)).map((i) => i.descricao)).toEqual(['Pimentão', 'Tomate', 'Abacaxi'])
+
+    await repositorios.itens.marcar(abacaxi, false)
+    expect((await repositorios.itens.listar(idLista)).map((i) => i.descricao)).toEqual(['Abacaxi', 'Pimentão', 'Tomate'])
+  })
+
+  it('item com R$ 0,00 fica concluído e o total concluído da lista não muda', async () => {
+    const tomate = await repositorios.itens.inserir(idLista, { descricao: 'Tomate', quantidade: 2, valorUnitarioCentavos: 150 })
+    const brinde = await repositorios.itens.inserir(idLista, { descricao: 'Cheiro-verde', quantidade: 1, valorUnitarioCentavos: 0 })
+    await repositorios.itens.marcar(tomate, true)
+    const antes = (await repositorios.listas.listar())[0]
+
+    await repositorios.itens.marcar(brinde, true)
+
+    expect((await banco.itens.get(brinde))?.concluido).toBe(1)
+    const depois = (await repositorios.listas.listar())[0]
+    expect(depois.totalConcluidoCentavos).toBe(antes.totalConcluidoCentavos)
+    expect(depois.totalConcluidoCentavos).toBe(300)
+  })
+
+  it('item que não existe mais → ErroNaoEncontrado de item', async () => {
+    const erro = await repositorios.itens.marcar(999, true).catch((e: unknown) => e)
+    expect(erro).toBeInstanceOf(ErroNaoEncontrado)
+    expect((erro as ErroNaoEncontrado).alvo).toBe('item')
+    expect((erro as Error).message).toBe('Este item não existe mais. Atualizamos a tela para você.')
+    expect(await banco.itens.count()).toBe(0)
+  })
+
+  it('falha do banco vira ErroArmazenamento de marcar e o item continua como estava', async () => {
+    const id = await repositorios.itens.inserir(idLista, banana)
+    vi.spyOn(banco.itens, 'update').mockRejectedValue(new Error('disk I/O error'))
+    const erro = await repositorios.itens.marcar(id, true).catch((e: unknown) => e)
+    expect(erro).toBeInstanceOf(ErroArmazenamento)
+    expect((erro as ErroArmazenamento).operacao).toBe('marcar')
+    vi.restoreAllMocks()
+    expect((await banco.itens.get(id))?.concluido).toBe(0)
+  })
+})
+
 describe('obter lista', () => {
   it('devolve a lista ou ErroNaoEncontrado', async () => {
     expect((await repositorios.listas.obter(idLista)).nome).toBe('Feira do sábado')

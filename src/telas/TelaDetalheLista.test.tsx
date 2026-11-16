@@ -363,12 +363,6 @@ describe('editar item', () => {
     expect(rodape()).toHaveTextContent('R$ 39,80')
   })
 
-  it('o marcador ainda não abre a edição', async () => {
-    await renderizarPronta()
-    fireEvent.click(linha('Pimentão').querySelector('.item-marcador')!)
-    expect(screen.queryByRole('dialog', { name: 'Editar item' })).not.toBeInTheDocument()
-  })
-
   it('item que não existe mais avisa, fecha o painel e recarrega', async () => {
     const [, abacaxi] = await criarItens(feiraDoSabado)
     renderizar()
@@ -380,6 +374,154 @@ describe('editar item', () => {
     expect(screen.queryByRole('dialog', { name: 'Editar item' })).not.toBeInTheDocument()
     await waitFor(() => expect(screen.queryByText('Abacaxi pérola')).not.toBeInTheDocument())
     expect(rodape()).toHaveTextContent('4 de 5 itens concluídos')
+  })
+})
+
+function marcador(descricao: string): HTMLElement {
+  return screen.getByRole('checkbox', { name: `Marcar ${descricao} como concluído` })
+}
+
+function ordemNaTela(): string[] {
+  return screen.getAllByRole('listitem').map((li) => li.querySelector('.item-desc')?.textContent ?? li.textContent ?? '')
+}
+
+async function concluidoNoBanco(descricao: string): Promise<boolean> {
+  const registros = await banco.itens.toArray()
+  return registros.find((registro) => registro.descricao === descricao)?.concluido === 1
+}
+
+describe('marcar e desmarcar item', () => {
+  it('marcar "Pimentão" desce para os concluídos, sem abrir o painel, e atualiza rótulo e rodapé', async () => {
+    await renderizarPronta()
+    expect(marcador('Pimentão')).not.toBeChecked()
+    expect(rodape()).toHaveTextContent('R$ 37,40')
+
+    fireEvent.click(marcador('Pimentão'))
+
+    await waitFor(() => expect(marcador('Pimentão')).toBeChecked())
+    expect(screen.queryByRole('dialog', { name: 'Editar item' })).not.toBeInTheDocument()
+    expect(ordemNaTela()).toEqual([
+      'Abacaxi pérola',
+      'Concluídos (5)',
+      'Tomate',
+      'Alface americana',
+      'Ovos caipira',
+      'Pimentão',
+      'Manga palmer',
+    ])
+    expect(linha('Pimentão')).toHaveClass('item--ok')
+    expect(rodape()).toHaveTextContent('R$ 43,40')
+    expect(rodape()).toHaveTextContent('5 de 6 itens concluídos · previsto R$ 51,40')
+    expect(screen.getByRole('progressbar', { name: 'Itens concluídos' })).toHaveAttribute('aria-valuenow', '5')
+    expect(await concluidoNoBanco('Pimentão')).toBe(true)
+  })
+
+  it('desmarcar "Tomate" volta à posição de inclusão, com o subtotal em cinza, e diminui o total', async () => {
+    await renderizarPronta()
+    fireEvent.click(marcador('Tomate'))
+
+    await waitFor(() => expect(marcador('Tomate')).not.toBeChecked())
+    expect(ordemNaTela()).toEqual([
+      'Tomate',
+      'Abacaxi pérola',
+      'Pimentão',
+      'Concluídos (3)',
+      'Alface americana',
+      'Ovos caipira',
+      'Manga palmer',
+    ])
+    expect(linha('Tomate')).not.toHaveClass('item--ok')
+    expect(rodape()).toHaveTextContent('R$ 30,20')
+    expect(rodape()).toHaveTextContent('3 de 6 itens concluídos · previsto R$ 51,40')
+    expect(await concluidoNoBanco('Tomate')).toBe(false)
+  })
+
+  it('desmarcar o último concluído some com o rótulo "Concluídos"', async () => {
+    await renderizarPronta([{ descricao: 'Alho', quantidade: 1, valorUnitarioCentavos: 300, concluido: true }])
+    expect(screen.getByText('Concluídos (1)')).toBeInTheDocument()
+    fireEvent.click(marcador('Alho'))
+    await waitFor(() => expect(screen.queryByText(/^Concluídos/)).not.toBeInTheDocument())
+    expect(rodape()).toHaveTextContent('0 de 1 item concluído · previsto R$ 3,00')
+  })
+
+  it('item de R$ 0,00 fica concluído e o total concluído não muda', async () => {
+    await renderizarPronta([
+      { descricao: 'Tomate', quantidade: 2, valorUnitarioCentavos: 150, concluido: true },
+      { descricao: 'Cheiro-verde', quantidade: 1, valorUnitarioCentavos: 0 },
+    ])
+    fireEvent.click(marcador('Cheiro-verde'))
+    await waitFor(() => expect(marcador('Cheiro-verde')).toBeChecked())
+    expect(rodape()).toHaveTextContent('R$ 3,00')
+    expect(rodape()).toHaveTextContent('2 de 2 itens concluídos · previsto R$ 3,00')
+  })
+
+  it('falha ao marcar mostra "Ops!" e o item continua pendente, no mesmo lugar', async () => {
+    await renderizarPronta()
+    vi.spyOn(repositorios.itens, 'marcar').mockRejectedValue(new ErroArmazenamento('marcar', new Error('disk I/O error')))
+    const antes = ordemNaTela()
+
+    fireEvent.click(marcador('Pimentão'))
+
+    await waitFor(() => expect(dialog()).toHaveTextContent('Ops!'))
+    expect(dialog()).toHaveTextContent('Não foi possível marcar o item. Tente novamente.')
+    expect(dialog()).not.toHaveTextContent('disk')
+    fecharDialog()
+    expect(marcador('Pimentão')).not.toBeChecked()
+    expect(ordemNaTela()).toEqual(antes)
+    expect(rodape()).toHaveTextContent('R$ 37,40')
+    expect(await concluidoNoBanco('Pimentão')).toBe(false)
+  })
+
+  it('toque duplo rápido no marcador: a tela mostra a mesma marcação gravada no banco', async () => {
+    await renderizarPronta()
+    fireEvent.click(marcador('Pimentão'))
+    fireEvent.click(marcador('Pimentão'))
+
+    await waitFor(() => expect(screen.queryByTestId('bloqueio-toques')).not.toBeInTheDocument())
+    const naTela = marcador('Pimentão').getAttribute('aria-checked') === 'true'
+    expect(naTela).toBe(await concluidoNoBanco('Pimentão'))
+  })
+
+  it('dois toques, esperando cada um, voltam o item à posição de inclusão', async () => {
+    await renderizarPronta()
+    fireEvent.click(marcador('Pimentão'))
+    await waitFor(() => expect(marcador('Pimentão')).toBeChecked())
+    fireEvent.click(marcador('Pimentão'))
+    await waitFor(() => expect(marcador('Pimentão')).not.toBeChecked())
+    expect(ordemNaTela().slice(0, 2)).toEqual(['Abacaxi pérola', 'Pimentão'])
+    expect(await concluidoNoBanco('Pimentão')).toBe(false)
+  })
+
+  it('item que não existe mais avisa e recarrega os itens', async () => {
+    const ids = await criarItens(feiraDoSabado)
+    renderizar()
+    await screen.findByRole('button', { name: '+ Adicionar item' })
+    await banco.itens.delete(ids[4])
+
+    fireEvent.click(marcador('Pimentão'))
+
+    await waitFor(() => expect(dialog()).toHaveTextContent('Este item não existe mais. Atualizamos a tela para você.'))
+    fecharDialog()
+    await waitFor(() => expect(screen.queryByText('Pimentão')).not.toBeInTheDocument())
+    expect(rodape()).toHaveTextContent('4 de 5 itens concluídos')
+  })
+
+  it('Enter no marcador não abre a edição', async () => {
+    await renderizarPronta()
+    fireEvent.keyDown(marcador('Pimentão'), { key: 'Enter' })
+    expect(screen.queryByRole('dialog', { name: 'Editar item' })).not.toBeInTheDocument()
+  })
+
+  it('com o "Excluir" revelado, tocar num marcador só esconde o botão', async () => {
+    await renderizarPronta()
+    deslizar(linha('Pimentão'), -80)
+    const abacaxi = marcador('Abacaxi pérola')
+    fireEvent.pointerDown(abacaxi, { clientX: 20, clientY: 50, pointerType: 'touch' })
+    fireEvent.pointerUp(abacaxi, { clientX: 20, clientY: 50, pointerType: 'touch' })
+    fireEvent.click(abacaxi)
+    expect(screen.queryByRole('button', { name: 'Excluir Pimentão' })).not.toBeInTheDocument()
+    expect(marcador('Abacaxi pérola')).not.toBeChecked()
+    expect(screen.queryByTestId('bloqueio-toques')).not.toBeInTheDocument()
   })
 })
 
