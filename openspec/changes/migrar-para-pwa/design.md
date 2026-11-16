@@ -140,7 +140,7 @@ Cada grupo de `tasks.md` é uma etapa que termina publicada, com um roteiro de v
 - **[Usuário troca de aparelho ou limpa os dados do navegador e perde as listas]** → O backup por arquivo é a mitigação no MVP; a sincronização na nuvem fica para depois do MVP.
 - **[O app Delphi e o PWA divergirem nas specs]** → O Delphi está congelado. As specs deste repositório descrevem só o PWA, e o `CLAUDE.md` deixa isso explícito.
 - **[Gestos (toque longo, deslizar) se comportam diferente no Safari e no Chrome]** → Implementar com Pointer Events e `touch-action` adequado, e validar nos dois aparelhos em cada etapa que introduz gesto (etapas 2 e 3).
-- **[Service worker preso numa versão antiga durante a validação]** → O aviso "Nova versão disponível" já vem na etapa 1. O roteiro de validação inclui conferir a versão exibida no rodapé da tela de Listas, gerada a partir do commit no build.
+- **[Service worker preso numa versão antiga durante a validação]** → O aviso "Nova versão disponível" já vem na etapa 1. O roteiro de validação inclui conferir a versão exibida no rodapé da tela de Listas. A versão segue `AA.M.n` (ano, mês e um número incremental, ex.: `26.11.0`), vem do `version` do `package.json` e sobe a cada publicação.
 - **[Site público na internet]** → Não há dados no servidor, então o risco é só de exposição do app em si. Nada de chaves ou segredos no código do PWA.
 
 ## Migration Plan

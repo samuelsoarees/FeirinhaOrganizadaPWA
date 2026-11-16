@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -6,22 +6,16 @@ import { defineConfig } from 'vitest/config'
 
 const corFundo = '#181F3D'
 
-function versaoDoBuild(): string {
-  const sha = process.env.GITHUB_SHA
-  if (sha) return sha.slice(0, 7)
-  try {
-    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
-      .toString()
-      .trim()
-  } catch {
-    return 'dev'
-  }
+// Versão do app no formato AA.M.n (ano, mês, incremental), lida do "version" do package.json.
+function versaoDoApp(): string {
+  const pacote = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as { version: string }
+  return pacote.version
 }
 
 export default defineConfig({
   base: process.env.BASE_PATH || '/',
   define: {
-    __VERSAO_APP__: JSON.stringify(versaoDoBuild()),
+    __VERSAO_APP__: JSON.stringify(versaoDoApp()),
   },
   plugins: [
     react(),

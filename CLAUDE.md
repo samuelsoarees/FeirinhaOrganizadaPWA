@@ -27,6 +27,7 @@ Referências:
   - `npm run preview`: serve o build, útil para testar o service worker e o modo offline;
   - `npm run gerar-icones`: regera os ícones do PWA em `public/` a partir de `public/barraca.png` (config em `pwa-assets.config.ts`).
 - **Publicação**: GitHub Actions publica no GitHub Pages a cada push na `main`. O `base` do Vite vem da variável `BASE_PATH`, com padrão `/`.
+- **Versão**: formato `AA.M.n` (ano com 2 dígitos, mês e um número incremental que volta a 0 no mês seguinte), por exemplo `26.11.0`. Fica no `version` do `package.json` e aparece no rodapé de "Minhas Listas". Antes de publicar uma mudança, suba a versão com `npm version AA.M.n --no-git-tag-version`. O mês vai sem zero à esquerda (`27.1.0`), porque o npm não aceita `27.01.0`.
 
 ## Arquitetura
 
