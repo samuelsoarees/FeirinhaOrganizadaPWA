@@ -11,13 +11,14 @@
 - [x] 1.7 Criar a oferta de instalação: "Instalar app" pelo `beforeinstallprompt` no Android e o aviso do Safari iOS com "Agora não" lembrado em `localStorage`, escondidos no modo standalone. Verificar: testes unitários da detecção de plataforma e modo standalone.
 - [x] 1.8 Criar `.github/workflows/pwa.yml` (lint, testes, build, deploy no GitHub Pages a partir da `main` e por `workflow_dispatch`). O usuário cria o repositório público no GitHub, configura o `origin` e ativa o Pages com a fonte "GitHub Actions". Verificar: o workflow fica verde e o endereço do Pages (`https://samuelsoarees.github.io/FeirinhaOrganizadaPWA/`) abre.
   - **Repositório (16/11/2026):** criado como `https://github.com/samuelsoarees/FeirinhaOrganizadaPWA` (nome diferente da pasta local). O `BASE_PATH` vem do `actions/configure-pages`, então o build já usa `/FeirinhaOrganizadaPWA/` sem mudança no código. Primeiro workflow verde em 16/11/2026 e o site abriu com a versão `a7dfc4f`.
-- [ ] 1.9 **Validação no celular — ponto de parada.** Roteiro, nos dois aparelhos:
+- [x] 1.9 **Validação no celular — ponto de parada.** Roteiro, nos dois aparelhos:
   1. Android (Chrome): abrir o endereço, tocar em "Instalar app", abrir pelo ícone em tela cheia, conferir ícone, nome, fonte, cores e ilustração.
   2. iPhone (Safari): ver o aviso de instalação, adicionar à Tela de Início, abrir pelo ícone sem a barra do Safari e conferir o notch.
   3. Modo avião nos dois: o app abre.
   4. Publicar uma mudança trivial: aparece "Nova versão disponível" e "Atualizar" troca a versão do rodapé.
 
   Aguardar o OK do usuário antes da etapa 2.
+  - **Validado (16/11/2026):** OK do usuário no Android e no iPhone para os quatro passos. A versão mudou de `a7dfc4f` para `cecc448` pelo "Atualizar".
 
 ## 2. Etapa 2 — Listas
 
