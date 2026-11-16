@@ -1,9 +1,12 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { App } from './App'
-import { bancoPadrao } from './dados/repositorios'
+import type { RegistroLista } from './dados/banco'
+import { bancoPadrao, repositoriosPadrao } from './dados/repositorios'
+import type { Item } from './dominio/itens'
 
 afterEach(async () => {
+  vi.restoreAllMocks()
   window.location.hash = ''
   const banco = bancoPadrao()
   await banco.transaction('rw', banco.listas, banco.itens, async () => {
@@ -37,19 +40,58 @@ describe('App', () => {
     expect(screen.getByText('1 lista')).toBeInTheDocument()
   })
 
-  it('abre a tela provisória pelo endereço #/lista/1', () => {
-    window.location.hash = '#/lista/1'
+  it('o card abre o detalhe e o "‹" volta para Listas sem empilhar outra entrada', async () => {
+    const banco = bancoPadrao()
+    const id = await banco.listas.add({ nome: 'Feira do sábado', dataCriacao: new Date().toISOString() } as RegistroLista)
     render(<App />)
-    expect(screen.getByRole('heading', { name: 'Lista 1' })).toBeInTheDocument()
+    fireEvent.click(await screen.findByRole('button', { name: /^Feira do sábado/ }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Feira do sábado' })).toBeInTheDocument()
+    expect(window.location.hash).toBe(`#/lista/${id}`)
+    expect(await screen.findByText('Nenhum item ainda. Toque em + para adicionar.')).toBeInTheDocument()
+
+    const tamanho = window.history.length
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }))
+    expect(await screen.findByRole('heading', { name: 'Minhas Listas' })).toBeInTheDocument()
+    expect(window.location.hash).toBe('')
+    expect(window.history.length).toBe(tamanho)
   })
 
-  it('o "‹" volta para Listas', () => {
-    window.location.hash = '#/lista/1'
+  it('pelo endereço de uma lista excluída avisa e mostra Listas ao fechar', async () => {
+    window.location.hash = '#/lista/999'
     render(<App />)
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: 'Voltar' }))
-      window.dispatchEvent(new HashChangeEvent('hashchange'))
+    await waitFor(() => expect(screen.getByRole('alertdialog')).toHaveTextContent('Esta lista não existe mais.'))
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }))
+    expect(await screen.findByRole('heading', { name: 'Minhas Listas' })).toBeInTheDocument()
+    expect(window.location.hash).toBe('#/')
+  })
+
+  it('com a leitura em andamento, o voltar não sai do detalhe', async () => {
+    const banco = bancoPadrao()
+    const id = await banco.listas.add({ nome: 'Feira do sábado', dataCriacao: new Date().toISOString() } as RegistroLista)
+    window.location.hash = '#/'
+    render(<App />)
+    let terminarLeitura: (itens: Item[]) => void = () => {}
+    vi.spyOn(repositoriosPadrao().itens, 'listar').mockImplementation(
+      () => new Promise<Item[]>((resolver) => (terminarLeitura = resolver)),
+    )
+    fireEvent.click(await screen.findByRole('button', { name: /^Feira do sábado/ }))
+    expect(await screen.findByTestId('bloqueio-toques')).toBeInTheDocument()
+
+    // Voltar do Android com nada aberto, durante a leitura.
+    await act(async () => {
+      const mudouHash = new Promise((resolver) => window.addEventListener('hashchange', resolver, { once: true }))
+      window.history.back()
+      await mudouHash
     })
-    expect(screen.getByRole('heading', { name: 'Minhas Listas' })).toBeInTheDocument()
+    expect(window.location.hash).toBe(`#/lista/${id}`)
+    expect(screen.queryByRole('heading', { name: 'Minhas Listas' })).not.toBeInTheDocument()
+
+    act(() => terminarLeitura([]))
+    expect(await screen.findByText('Nenhum item ainda. Toque em + para adicionar.')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Feira do sábado' })).toBeInTheDocument()
+
+    // Depois da leitura, o "‹" volta para Listas normalmente.
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }))
+    expect(await screen.findByRole('heading', { name: 'Minhas Listas' })).toBeInTheDocument()
   })
 })

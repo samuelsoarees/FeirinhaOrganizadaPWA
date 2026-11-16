@@ -8,11 +8,17 @@ function doisDigitos(numero: number): string {
 // 1234567 → "R$ 12.345,67"
 export function formatarReais(centavos: number): string {
   const sinal = centavos < 0 ? '-' : ''
+  return `${sinal}R$ ${formatarNumeroReais(Math.abs(centavos))}`
+}
+
+// 1234567 → "12.345,67", sem o "R$". Usado no campo de valor, que mostra o "R$" à parte.
+export function formatarNumeroReais(centavos: number): string {
+  const sinal = centavos < 0 ? '-' : ''
   const absoluto = Math.abs(Math.round(centavos))
   const reais = Math.floor(absoluto / 100)
   const resto = absoluto % 100
   const reaisComMilhar = String(reais).replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-  return `${sinal}R$ ${reaisComMilhar},${doisDigitos(resto)}`
+  return `${sinal}${reaisComMilhar},${doisDigitos(resto)}`
 }
 
 // "dd/mm/aaaa" no fuso do aparelho.

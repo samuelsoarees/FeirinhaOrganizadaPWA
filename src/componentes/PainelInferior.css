@@ -1,0 +1,49 @@
+/* Bottom sheet do item (docs/mock-telas.html, tela 5). Acima do menu (20/21), abaixo do modal (30/31). */
+.painel-overlay {
+  z-index: 25;
+}
+
+.painel-inferior {
+  position: fixed;
+  z-index: 26;
+  left: 0;
+  right: 0;
+  /* --teclado: altura do teclado virtual coberta pelo visualViewport. */
+  bottom: var(--teclado, 0px);
+  max-width: 600px;
+  max-height: calc(var(--altura-visivel, 100dvh) - var(--seguro-topo) - 16px);
+  margin: 0 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 18px calc(18px + var(--seguro-baixo));
+  background: var(--fundo);
+  border-top: 1px solid var(--borda);
+  border-radius: 22px 22px 0 0;
+  animation: painel-subir 0.2s ease-out;
+  transition: bottom 0.1s ease-out;
+}
+
+/* Com o teclado aberto, a barra de gestos do iPhone fica atrás dele. */
+.painel-inferior--teclado {
+  padding-bottom: 14px;
+}
+
+@keyframes painel-subir {
+  from {
+    transform: translateY(105%);
+  }
+}
+
+.painel-alca {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 14px;
+  border-radius: 2px;
+  background: #ffffff33;
+}
+
+.painel-titulo {
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 700;
+}

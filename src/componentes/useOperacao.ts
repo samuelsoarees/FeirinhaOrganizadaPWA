@@ -10,7 +10,8 @@ export const ATRASO_INDICADOR_MS = 300
 
 export type ResultadoOperacao<T> =
   | { status: 'ok'; valor: T }
-  | { status: 'erro'; erro: unknown }
+  // `dialogFechado` resolve quando o usuário fecha o "Atenção" ou o "Ops!" do erro.
+  | { status: 'erro'; erro: unknown; dialogFechado: Promise<boolean> }
   // Outra operação estava em andamento.
   | { status: 'ignorada' }
 
@@ -66,8 +67,8 @@ export function useOperacao(): {
         const valor = await acao()
         return { status: 'ok', valor }
       } catch (erro) {
-        void mostrarDialog(dialogDoErro(erro, opcoes.mensagemFalha))
-        return { status: 'erro', erro }
+        const dialogFechado = mostrarDialog(dialogDoErro(erro, opcoes.mensagemFalha))
+        return { status: 'erro', erro, dialogFechado }
       } finally {
         clearTimeout(temporizador)
         emAndamento.current = false

@@ -1,17 +1,6 @@
-import { ErroArmazenamento, ErroNaoEncontrado, ErroValidacao, type OperacaoArmazenamento } from '../dominio/erros'
-import { compararListas, resumirItens, validarNomeLista, type ResumoLista } from '../dominio/listas'
-import { Mensagens } from '../dominio/mensagens'
+import { compararListas, erroListaNaoEncontrada, resumirItens, validarNomeLista, type Lista, type ResumoLista } from '../dominio/listas'
 import type { BancoFeira } from './banco'
-
-// Erros de regra passam direto; qualquer outro (Dexie, IndexedDB, disco) vira ErroArmazenamento.
-async function protegido<T>(operacao: OperacaoArmazenamento, acao: () => Promise<T>): Promise<T> {
-  try {
-    return await acao()
-  } catch (erro) {
-    if (erro instanceof ErroValidacao || erro instanceof ErroNaoEncontrado) throw erro
-    throw new ErroArmazenamento(operacao, erro)
-  }
-}
+import { protegido } from './protegido'
 
 export class RepositorioListas {
   private readonly banco: BancoFeira
@@ -41,6 +30,15 @@ export class RepositorioListas {
     )
   }
 
+  // Lista que não existe mais → ErroNaoEncontrado.
+  obter(id: number): Promise<Lista> {
+    return protegido('listar', async () => {
+      const lista = await this.banco.listas.get(id)
+      if (!lista) throw erroListaNaoEncontrada()
+      return lista
+    })
+  }
+
   // Devolve o id da lista criada.
   async inserir(nome: string, agora: Date = new Date()): Promise<number> {
     const nomeValido = validarNomeLista(nome)
@@ -53,7 +51,7 @@ export class RepositorioListas {
     const nomeValido = validarNomeLista(nome)
     await protegido('salvar', async () => {
       const alterados = await this.banco.listas.update(id, { nome: nomeValido })
-      if (alterados === 0) throw new ErroNaoEncontrado(Mensagens.listas.naoEncontrada)
+      if (alterados === 0) throw erroListaNaoEncontrada()
     })
   }
 
@@ -62,7 +60,7 @@ export class RepositorioListas {
     await protegido('excluir', () =>
       this.banco.transaction('rw', this.banco.listas, this.banco.itens, async () => {
         const existe = await this.banco.listas.get(id)
-        if (!existe) throw new ErroNaoEncontrado(Mensagens.listas.naoEncontrada)
+        if (!existe) throw erroListaNaoEncontrada()
         await this.banco.itens.where('idLista').equals(id).delete()
         await this.banco.listas.delete(id)
       }),

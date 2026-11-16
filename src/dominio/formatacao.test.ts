@@ -58,10 +58,4 @@ describe('textos da tela de Listas', () => {
       '“Feira 14/10” será excluída. Essa ação não pode ser desfeita.',
     )
   })
-
-  it('"Em breve" provisório do card', () => {
-    expect(Mensagens.listas.detalheEmBreve('Feira do sábado')).toBe(
-      'O detalhe de “Feira do sábado” chega na próxima etapa.',
-    )
-  })
 })

@@ -8,11 +8,17 @@ export class ErroValidacao extends Error {
   }
 }
 
+export type AlvoNaoEncontrado = 'lista' | 'item'
+
 // A lista ou o item deixou de existir. A tela mostra "Atenção" e recarrega.
+// `alvo` diz o que sumiu: no detalhe, lista inexistente volta para Listas e item inexistente só recarrega.
 export class ErroNaoEncontrado extends Error {
-  constructor(mensagem: string) {
+  readonly alvo: AlvoNaoEncontrado
+
+  constructor(mensagem: string, alvo: AlvoNaoEncontrado = 'lista') {
     super(mensagem)
     this.name = 'ErroNaoEncontrado'
+    this.alvo = alvo
   }
 }
 

@@ -21,6 +21,7 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
+  window.location.hash = ''
   vi.useRealTimers()
   vi.restoreAllMocks()
   await banco.delete()
@@ -377,20 +378,23 @@ describe('excluir lista', () => {
 })
 
 describe('gestos do card', () => {
+  let idLista: number
+
   async function prepararCard() {
-    await criarLista('Feira do sábado', new Date())
+    idLista = await criarLista('Feira do sábado', new Date())
     renderizar()
     await screen.findByText('Feira do sábado')
     return screen.getByRole('button', { name: /^Feira do sábado/ })
   }
 
-  it('toque simples mostra o "Em breve" provisório', async () => {
+  it('toque simples abre o detalhe da lista, marcando que veio de Listas', async () => {
     const area = await prepararCard()
     fireEvent.pointerDown(area, { clientX: 50, clientY: 50, pointerType: 'touch' })
     fireEvent.pointerUp(area, { clientX: 50, clientY: 50, pointerType: 'touch' })
     fireEvent.click(area)
-    expect(dialog()).toHaveTextContent('Em breve')
-    expect(dialog()).toHaveTextContent('O detalhe de “Feira do sábado” chega na próxima etapa.')
+    expect(window.location.hash).toBe(`#/lista/${idLista}`)
+    expect(window.history.state).toMatchObject({ veioDeListas: true })
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   })
 
   it('toque longo de 500 ms abre o menu e, ao soltar, a lista não abre', async () => {
@@ -408,7 +412,7 @@ describe('gestos do card', () => {
 
     fireEvent.pointerUp(area, { clientX: 50, clientY: 50, pointerType: 'touch' })
     fireEvent.click(area)
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(window.location.hash).not.toContain('lista')
     expect(screen.getByRole('dialog', { name: 'Feira do sábado' })).toBeInTheDocument()
   })
 
@@ -422,7 +426,7 @@ describe('gestos do card', () => {
     })
     fireEvent.pointerUp(area, { clientX: 52, clientY: 70, pointerType: 'touch' })
     fireEvent.click(area)
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(window.location.hash).not.toContain('lista')
     expect(screen.queryByRole('dialog', { name: 'Feira do sábado' })).not.toBeInTheDocument()
   })
 
@@ -431,7 +435,7 @@ describe('gestos do card', () => {
     fireEvent.pointerDown(area, { clientX: 50, clientY: 50, pointerType: 'touch' })
     fireEvent.pointerCancel(area, { pointerType: 'touch' })
     fireEvent.click(area)
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(window.location.hash).not.toContain('lista')
   })
 
   it('movimento de até 10 px ainda é toque', async () => {
@@ -440,7 +444,7 @@ describe('gestos do card', () => {
     fireEvent.pointerMove(area, { clientX: 58, clientY: 60, pointerType: 'touch' })
     fireEvent.pointerUp(area, { clientX: 58, clientY: 60, pointerType: 'touch' })
     fireEvent.click(area)
-    expect(dialog()).toHaveTextContent('Em breve')
+    expect(window.location.hash).toBe(`#/lista/${idLista}`)
   })
 })
 

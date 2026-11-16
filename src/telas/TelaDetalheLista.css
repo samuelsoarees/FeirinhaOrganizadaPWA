@@ -1,0 +1,248 @@
+/* Detalhe da lista (docs/mock-telas.html, tela 4). .estado, .espaco e .btn vêm de TelaListas.css e base.css. */
+.tela-detalhe {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topo-detalhe {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 8px;
+}
+
+.topo-detalhe h1 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topo-detalhe-voltar,
+.topo-detalhe-acao {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+.topo-detalhe-voltar {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--texto);
+}
+
+.topo-detalhe-acao {
+  font-size: 17px;
+  color: var(--texto-2);
+}
+
+.topo-detalhe-voltar:active,
+.topo-detalhe-acao:active {
+  background: var(--superficie);
+}
+
+.topo-detalhe-acao:disabled {
+  visibility: hidden;
+}
+
+/* Área dos itens: rola sozinha, acima do rodapé fixo. */
+.itens {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding: 0 14px 16px;
+}
+
+.itens::-webkit-scrollbar {
+  display: none;
+}
+
+.itens-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.itens-grupo {
+  padding: 14px 4px 4px;
+  border-bottom: 1px solid #28699355;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--texto-2);
+}
+
+.itens-vazio {
+  flex: 1;
+  margin: 0;
+  padding: 40px 28px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--texto-2);
+}
+
+/* Linha do item. O conteúdo desliza sobre o botão "Excluir", que fica por baixo à direita. */
+.item-linha {
+  position: relative;
+  border-bottom: 1px solid #28699355;
+}
+
+.item-excluir {
+  position: absolute;
+  right: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 68px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--vermelho);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 4px;
+  background: var(--fundo);
+  cursor: pointer;
+  outline: 0;
+  touch-action: pan-y;
+  -webkit-touch-callout: none;
+  transition: transform 0.2s ease-out;
+}
+
+.item--arrastando {
+  transition: none;
+}
+
+.item:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--borda-foco);
+  border-radius: 8px;
+}
+
+.item-marcador {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--borda);
+  font-size: 14px;
+  font-weight: 700;
+  color: transparent;
+}
+
+.item--ok .item-marcador {
+  background: var(--verde);
+  border-color: var(--verde);
+  color: #fff;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-desc {
+  font-size: 14px;
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-det {
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--texto-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.item-sub {
+  flex: none;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.item:not(.item--ok) .item-sub {
+  font-weight: 400;
+  color: var(--texto-2);
+}
+
+/* Rodapé fixo com o total */
+.rodape-total {
+  flex: none;
+  padding: 14px 16px calc(16px + var(--seguro-baixo));
+  background: var(--superficie);
+  border-top: 1px solid var(--borda);
+  border-radius: 18px 18px 0 0;
+}
+
+.rodape-total-linha {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.rodape-total-linha span {
+  font-size: 13px;
+  color: var(--texto-2);
+}
+
+.rodape-total-linha strong {
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.progresso {
+  height: 4px;
+  margin: 8px 0 6px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #ffffff1f;
+}
+
+.progresso i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--verde);
+  transition: width 0.25s ease-out;
+}
+
+.rodape-total-resumo {
+  margin: 0 0 12px;
+  font-size: 11px;
+  color: var(--texto-2);
+  font-variant-numeric: tabular-nums;
+}

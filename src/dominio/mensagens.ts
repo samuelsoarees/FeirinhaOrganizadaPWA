@@ -3,7 +3,6 @@
 export const Mensagens = {
   geral: {
     ok: 'OK',
-    emBreve: 'Em breve',
     voltar: 'Voltar',
     atencao: 'Atenção',
     ops: 'Ops!',
@@ -45,7 +44,6 @@ export const Mensagens = {
         return `${nomeEntreAspas} e seu 1 item serão excluídos. Essa ação não pode ser desfeita.`
       return `${nomeEntreAspas} e seus ${quantidadeItens} itens serão excluídos. Essa ação não pode ser desfeita.`
     },
-    detalheEmBreve: (nome: string) => `O detalhe de “${nome}” chega na próxima etapa.`,
     nomeObrigatorio: 'Informe o nome da lista.',
     nomeMuitoGrande: 'O nome da lista pode ter no máximo 60 caracteres.',
     naoEncontrada: 'Esta lista não existe mais. Atualizamos a tela para você.',
@@ -54,9 +52,49 @@ export const Mensagens = {
     falhaExcluir: 'Não foi possível excluir a lista. Tente novamente.',
     versao: (versao: string) => `versão ${versao}`,
   },
-  detalheProvisorio: {
-    titulo: (id: string) => `Lista ${id}`,
-    texto: 'O detalhe da lista chega numa próxima etapa.',
+  detalhe: {
+    renomearLista: 'Renomear lista',
+    vazio: 'Nenhum item ainda. Toque em + para adicionar.',
+    concluidos: (quantidade: number) => `Concluídos (${quantidade})`,
+    totalConcluido: 'Total concluído',
+    progresso: 'Itens concluídos',
+    resumo: (concluidos: number, total: number, previsto: string) => {
+      if (total === 0) return `nenhum item · previsto ${previsto}`
+      if (total === 1) return `${concluidos} de 1 item concluído · previsto ${previsto}`
+      return `${concluidos} de ${total} itens concluídos · previsto ${previsto}`
+    },
+    adicionarItem: '+ Adicionar item',
+    erroTitulo: 'Não foi possível carregar os itens.',
+    erroTexto: 'Verifique o armazenamento do aparelho e tente de novo.',
+    tentarNovamente: 'Tentar novamente',
+    falhaCarregar: 'Não foi possível carregar os itens. Tente novamente.',
+  },
+  itens: {
+    unidade: 'UN',
+    detalhe: (quantidade: number, unidade: string, valorUnitario: string) =>
+      `${quantidade} ${unidade} × ${valorUnitario}`,
+    novoItem: 'Novo item',
+    editarItem: 'Editar item',
+    descricao: 'Descrição',
+    quantidade: 'Quantidade (UN)',
+    diminuirQuantidade: 'Diminuir quantidade',
+    aumentarQuantidade: 'Aumentar quantidade',
+    valorUnitario: 'Valor unitário',
+    simboloMoeda: 'R$',
+    subtotal: 'Subtotal',
+    salvarItem: 'Salvar item',
+    excluirItem: 'Excluir item',
+    excluir: 'Excluir',
+    excluirDe: (descricao: string) => `Excluir ${descricao}`,
+    excluirTitulo: 'Excluir item?',
+    excluirMensagem: (descricao: string) => `“${descricao}” será excluído. Essa ação não pode ser desfeita.`,
+    descricaoObrigatoria: 'Informe a descrição do item.',
+    descricaoMuitoGrande: 'A descrição do item pode ter no máximo 80 caracteres.',
+    quantidadeInvalida: 'A quantidade deve ser um número inteiro de 1 a 999.',
+    valorInvalido: 'O valor unitário deve ficar entre R$ 0,00 e R$ 99.999,99.',
+    naoEncontrado: 'Este item não existe mais. Atualizamos a tela para você.',
+    falhaSalvar: 'Não foi possível salvar o item. Tente novamente.',
+    falhaExcluir: 'Não foi possível excluir o item. Tente novamente.',
   },
   instalacao: {
     instalarApp: 'Instalar app',

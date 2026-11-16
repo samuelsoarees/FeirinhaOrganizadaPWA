@@ -10,6 +10,7 @@ import { useRepositorios } from '../componentes/useRepositorios'
 import { ErroNaoEncontrado } from '../dominio/erros'
 import { nomeSugerido, type ResumoLista } from '../dominio/listas'
 import { Mensagens } from '../dominio/mensagens'
+import { abrirDetalhe } from '../navegacao/rotas'
 import { pedirArmazenamentoPersistente } from '../pwa/armazenamento'
 import { useOfertaInstalacao } from '../pwa/instalacao'
 import { CardLista } from './CardLista'
@@ -102,14 +103,7 @@ export function TelaListas() {
     }
   }
 
-  // Provisório até a Etapa 3, quando o toque abre o detalhe.
-  const abrirLista = (lista: ResumoLista) => {
-    void mostrarDialog({
-      icone: 'info',
-      titulo: Mensagens.geral.emBreve,
-      mensagem: Mensagens.listas.detalheEmBreve(lista.nome),
-    })
-  }
+  const abrirLista = (lista: ResumoLista) => abrirDetalhe(lista.id)
 
   const listas = estado.fase === 'pronta' ? estado.listas : []
   const temListas = listas.length > 0

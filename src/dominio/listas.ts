@@ -1,4 +1,4 @@
-import { ErroValidacao } from './erros'
+import { ErroNaoEncontrado, ErroValidacao } from './erros'
 import { formatarDiaMes } from './formatacao'
 import { Mensagens } from './mensagens'
 
@@ -73,4 +73,8 @@ export function nomeSugerido(hoje: Date): string {
 // A cor depende só do id, então não muda quando outras listas são criadas ou excluídas.
 export function corDoToldo(id: number): string {
   return CORES_TOLDO[((id % 4) + 4) % 4]
+}
+
+export function erroListaNaoEncontrada(): ErroNaoEncontrado {
+  return new ErroNaoEncontrado(Mensagens.listas.naoEncontrada, 'lista')
 }
