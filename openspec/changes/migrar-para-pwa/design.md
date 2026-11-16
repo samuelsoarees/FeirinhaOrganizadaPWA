@@ -3,7 +3,7 @@
 - O comportamento de listas já está especificado em `openspec/specs/listas` e `openspec/specs/tela-listas`, e foi implementado no Delphi. O visual está nos mocks `docs/mock-telas.html` e `docs/mock-tela-listas.html`, e os tokens de cor e fonte em `docs/PLANEJAMENTO.md` (seção 2).
 - O PWA nasce do zero num repositório próprio (`Feira_Organizada_PWA`), com o projeto na raiz. O código Delphi não é reaproveitado; servem de referência as regras, as mensagens e a separação em camadas (entidade → regra → acesso a dados → tela).
 - Restrições:
-  - hospedagem estática (GitHub Pages) num subcaminho com o nome do repositório (`/Feira_Organizada_PWA/`);
+  - hospedagem estática (GitHub Pages) num subcaminho com o nome do repositório no GitHub (`/FeirinhaOrganizadaPWA/`);
   - repositório público no GitHub, condição para o GitHub Pages gratuito;
   - no iPhone não existe prompt de instalação, e o Safari pode apagar dados de sites não instalados após 7 dias sem uso;
   - o desenvolvimento acontece em Windows com Node 24.
@@ -120,7 +120,7 @@ O fluxo é: telas → `dominio` (regras) → `dados` (repositórios). As telas n
   - passos: `npm ci`, `npm run lint`, `npm test`, `npm run build` com o `base` vindo da variável `BASE_PATH`, preenchida pelo `actions/configure-pages` com o subcaminho do repositório (em desenvolvimento local o `base` é `/`);
   - publica o `dist` com `actions/upload-pages-artifact` + `actions/deploy-pages`.
 - Cada etapa validada chega na `main` e é publicada. Trabalho em andamento fica em branches de etapa, que não publicam.
-- Endereço esperado: `https://samuelsoarees.github.io/Feira_Organizada_PWA/` (supondo o repositório no GitHub com esse nome).
+- Endereço: `https://samuelsoarees.github.io/FeirinhaOrganizadaPWA/` (repositório `samuelsoarees/FeirinhaOrganizadaPWA`; a pasta local continua `Feira_Organizada_PWA`).
 
 ### 11. Etapas
 Cada grupo de `tasks.md` é uma etapa que termina publicada, com um roteiro de validação no celular e um **ponto de parada**: a etapa seguinte só começa depois da validação do usuário.
