@@ -31,7 +31,7 @@
   - **Nota (16/11/2026):** a `PilhaCamadas` passou a adiar o `history.back()` para uma microtask. Se outra camada abre no mesmo toque (menu → modal, menu → dialog), ela reaproveita a entrada com `replaceState`, sem disputar o back assíncrono com um `pushState`.
 - [x] 2.7 Conferir as telas lado a lado com `docs/mock-tela-listas.html` no `npm run dev` em largura 390 px e ajustar diferenças visuais. Verificar: `npm run lint`, `npm test` e `npm run build` passam e o workflow publica.
   - **Andamento (16/11/2026):** conferido no `npm run dev` a 390 px (cards, menu, modal, confirmação e rolagem com 17 listas); lint, 124 testes e build passam. Workflow verde e o site publicado com a versão `1d62bab` (16/11/2026).
-- [ ] 2.8 **Validação no celular — ponto de parada.** Rodar o "Roteiro sugerido" de `docs/mock-tela-listas.html` no app publicado, nos dois aparelhos. Incluir:
+- [x] 2.8 **Validação no celular — ponto de parada.** Rodar o "Roteiro sugerido" de `docs/mock-tela-listas.html` no app publicado, nos dois aparelhos. Incluir:
   - 15+ listas rolando a partir de cima de um card;
   - toque longo;
   - teclado virtual sobre o modal;
@@ -40,6 +40,7 @@
   - modo avião.
 
   Aguardar o OK do usuário antes da etapa 3.
+  - **Validado (16/11/2026):** OK do usuário no celular para o roteiro da etapa, na versão `26.11.0`.
 
 ## 3. Etapa 3 — Detalhe e itens
 
