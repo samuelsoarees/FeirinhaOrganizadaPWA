@@ -65,7 +65,7 @@
 - [x] 3.6 Conferir o detalhe e o painel lado a lado com as telas 4 e 5 de `docs/mock-telas.html` e ajustar. Verificar: `npm run lint`, `npm test` e `npm run build` passam e o workflow publica.
   - **Andamento (16/11/2026):** conferido no `npm run dev` a 390 px (detalhe com 6 itens e "Concluídos (4)", rodapé, painel "Novo item" com 5 × R$ 0,75, edição com "Excluir item", deslizar e "Excluir item?", lista inexistente voltando para Listas); lint, 208 testes e build passam. Workflow verde e o site publicado com a versão `26.11.1` (16/11/2026).
   - **Notas de implementação:** o voltar do detalhe usa `history.back()` quando ele foi aberto por um card (marca `veioDeListas` no `history.state`) e `location.replace('#/')` quando foi aberto pelo endereço, para o voltar do Android em Listas continuar saindo do app. Com uma operação em andamento e nada aberto, a troca de hash pelo voltar é desfeita (`useRota`). Depois do aviso de lista inexistente, a tela espera a pilha de camadas esvaziar (`aguardarSemCamadas`) antes de navegar. A quantidade aceita digitação além do "–"/"+", sempre limitada a 3 dígitos e validada pela regra.
-- [ ] 3.7 **Validação no celular — ponto de parada.** Nos dois aparelhos:
+- [x] 3.7 **Validação no celular — ponto de parada.** Nos dois aparelhos:
   - criar uma lista e adicionar 10+ itens (teclado numérico, máscara do valor, painel acima do teclado);
   - editar um item;
   - excluir deslizando e pelo painel;
@@ -75,6 +75,7 @@
   - modo avião.
 
   Aguardar o OK do usuário antes da etapa 4.
+  - **Validado:** OK do usuário no celular para o roteiro da etapa, confirmado em 16/11/2026 (a marcação ficou para depois do encerramento da Etapa 5).
 
 ## 4. Etapa 4 — Marcar concluído
 
