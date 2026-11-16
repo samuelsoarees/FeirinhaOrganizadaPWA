@@ -1,0 +1,24 @@
+schema: spec-driven
+
+context: |
+  Language: pt-BR
+  All artifacts must be written in pt-BR.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  Projeto: Feira Organizada PWA, app de listas de feira instalavel na tela inicial (iPhone e Android).
+  Substitui o app Delphi FireMonkey, que fica congelado como referencia no repositorio Feira_Organizada.
+  Stack: Vite + React + TypeScript, IndexedDB (Dexie), vite-plugin-pwa, Vitest, ESLint. Projeto na raiz do repo.
+  MVP: listas de feira guardadas so no aparelho, sem login e sem backend.
+  Publicacao: GitHub Pages via GitHub Actions a partir da branch main.
+  Planejamento do MVP: docs/PLANEJAMENTO.md; desenho das telas: docs/mock-telas.html e docs/mock-tela-listas.html.
+  Camadas: src/dominio (regras, sem React nem banco) -> src/dados (repositorios) <- src/telas e src/componentes.
+  Mensagens ao usuario concentradas em src/dominio/mensagens.ts.
+
+rules:
+  specs:
+    - Cenarios descrevem o que o usuario ve ou o que fica gravado no banco, nunca nomes de classes
+  design:
+    - Componentes, bibliotecas, arquivos e nomes de classes/funcoes ficam no design, nao nas specs
+  tasks:
+    - "Cada grupo termina com lint, testes e build passando (npm run lint / npm test / npm run build)"
+    - "Cada etapa termina publicada no GitHub Pages e com um roteiro de validacao no celular (iPhone e Android)"

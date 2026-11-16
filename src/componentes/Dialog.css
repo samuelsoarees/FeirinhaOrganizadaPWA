@@ -1,0 +1,95 @@
+/* Padrão do TFancyDialog (docs/mock-tela-listas.html). */
+.dialog-overlay {
+  z-index: 40;
+}
+
+.dialog {
+  position: fixed;
+  z-index: 41;
+  left: 50%;
+  top: 50%;
+  width: min(100% - 52px, 360px);
+  transform: translate(-50%, -50%);
+  background: var(--dlg-fundo);
+  border-radius: var(--raio-card);
+  padding: 22px 20px 18px;
+  text-align: center;
+  animation: dialog-entrar 0.15s ease-out;
+}
+
+@keyframes dialog-entrar {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+}
+
+.dialog-icone {
+  --cor: var(--cinza);
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  border: 3px solid var(--cor);
+  color: var(--cor);
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dialog-icone--alerta {
+  --cor: var(--laranja);
+}
+.dialog-icone--erro {
+  --cor: var(--vermelho);
+}
+.dialog-icone--info {
+  --cor: var(--azul);
+}
+.dialog-icone--pergunta {
+  --cor: var(--cinza);
+}
+.dialog-icone--sucesso {
+  --cor: var(--verde-dialog);
+}
+
+.dialog-titulo {
+  margin: 0 0 8px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--dlg-titulo);
+}
+
+.dialog-mensagem {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--dlg-msg);
+}
+
+.dialog-botoes {
+  display: flex;
+  gap: 10px;
+}
+
+.dialog-botao {
+  flex: 1;
+  height: 44px;
+  border: 0;
+  border-radius: var(--raio-botao);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.dialog-botao--sim {
+  background: var(--primaria);
+  color: #fff;
+}
+
+.dialog-botao--nao {
+  background: var(--dlg-botao-secundario);
+  color: var(--dlg-titulo);
+}

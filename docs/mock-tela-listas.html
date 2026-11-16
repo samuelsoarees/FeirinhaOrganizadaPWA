@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock Tela de Listas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fundo: #181F3D;
+    --superficie: #232C51;
+    --borda: #286993;
+    --primaria: #DF255C;
+    --texto: #FFFFFF;
+    --texto-2: #A9B1D6;
+    --dlg-titulo: #2C2C2C;
+    --dlg-msg: #848484;
+    --verde: #2E9E22;
+    --vermelho: #E64D4D;
+    --laranja: #F3A867;
+    --azul: #3085D6;
+    --cinza: #AAAAAA;
+    --toldo-0: #4BBBBD;
+    --toldo-1: #FDCB6E;
+    --toldo-2: #C2BE55;
+    --toldo-3: #E9775F;
+    --pagina: #0E1330;
+    --painel: #141A38;
+    --fonte: "Nunito", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; background: var(--pagina); color: var(--texto);
+    font-family: var(--fonte); padding: 24px 16px 48px;
+  }
+  header.doc { max-width: 1120px; margin: 0 auto 20px; }
+  header.doc h1 { margin: 0 0 6px; font-size: 22px; }
+  header.doc p { margin: 0; color: var(--texto-2); font-size: 14px; line-height: 1.5; }
+  header.doc code { color: var(--texto); }
+
+  .area { max-width: 1120px; margin: 0 auto; display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+
+  /* Aparelho */
+  .aparelho { flex: none; width: 100%; max-width: 408px; }
+  .phone { width: 100%; height: 710px; border-radius: 36px; background: #05070F; padding: 10px; box-shadow: 0 20px 50px #00000080; }
+  .screen {
+    position: relative; width: 100%; height: 100%; border-radius: 26px; overflow: hidden;
+    background: var(--fundo); display: flex; flex-direction: column; user-select: none; -webkit-user-select: none;
+  }
+  .status { height: 26px; flex: none; display: flex; justify-content: space-between; align-items: center; padding: 0 18px; font-size: 11px; color: var(--texto-2); }
+  .sob-aparelho { display: flex; justify-content: center; gap: 10px; margin-top: 12px; }
+
+  .topo { padding: 10px 18px 14px; flex: none; }
+  .topo h2 { margin: 0; font-size: 20px; font-weight: 700; }
+  .topo small { color: var(--texto-2); font-size: 12px; min-height: 16px; display: block; }
+
+  .conteudo {
+    flex: 1; overflow-y: auto; padding: 0 14px 90px; display: flex; flex-direction: column; gap: 10px;
+    scrollbar-width: none; overscroll-behavior: contain;
+  }
+  .conteudo::-webkit-scrollbar { display: none; }
+
+  /* Card (TFrameCardLista) */
+  .card {
+    flex: none; height: 70px; background: var(--superficie); border: 1px solid var(--borda); border-radius: 10px;
+    padding: 0 0 0 18px; position: relative; display: flex; align-items: center; gap: 8px; cursor: pointer;
+    transition: transform .08s, background .15s; touch-action: pan-y;
+  }
+  .card.pressionado { background: #2A3561; }
+  .card::before {
+    content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px; border-radius: 0 4px 4px 0;
+    background: var(--faixa);
+  }
+  .card .info { flex: 1; min-width: 0; }
+  .card .nome { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .meta { font-size: 11px; color: var(--texto-2); margin-top: 4px; }
+  .card .valor { font-size: 15px; font-weight: 700; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .card .valor small { display: block; font-size: 10px; color: var(--texto-2); font-weight: 400; }
+  .card .mais {
+    width: 36px; align-self: stretch; display: grid; place-items: center; color: var(--texto-2); font-size: 20px;
+    background: none; border: 0; font-family: inherit; cursor: pointer; border-radius: 0 10px 10px 0;
+  }
+  .card .mais:hover { color: var(--texto); }
+
+  .fab {
+    position: absolute; right: 18px; bottom: 22px; width: 56px; height: 56px; border-radius: 50%; border: 0;
+    background: var(--primaria); color: #fff; display: grid; place-items: center; font-size: 30px; line-height: 1;
+    box-shadow: 0 6px 16px #DF255C66; cursor: pointer; font-family: inherit;
+  }
+
+  /* Estados vazio / erro */
+  .estado { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 28px 40px; gap: 10px; }
+  .estado img { width: 190px; height: 190px; object-fit: contain; }
+  .estado h3 { margin: 6px 0 0; font-size: 17px; }
+  .estado p { margin: 0; font-size: 13px; color: var(--texto-2); line-height: 1.5; }
+  .estado .icone-erro { width: 72px; height: 72px; border-radius: 50%; border: 3px solid var(--vermelho); color: var(--vermelho); display: grid; place-items: center; font-size: 34px; font-weight: 800; }
+
+  .btn {
+    background: var(--primaria); border-radius: 20px; height: 48px; display: grid; place-items: center;
+    font-weight: 700; font-size: 14px; width: 100%; border: 0; color: #fff; font-family: inherit; cursor: pointer;
+  }
+  .btn-texto { text-align: center; font-size: 13px; color: var(--texto-2); padding: 12px 0 2px; background: none; border: 0; width: 100%; font-family: inherit; cursor: pointer; }
+
+  /* Overlays */
+  .overlay { position: absolute; inset: 0; background: #000000A6; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .overlay.on { opacity: 1; pointer-events: auto; }
+
+  /* Action sheet do card */
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; background: var(--fundo); border-top: 1px solid var(--borda);
+    border-radius: 22px 22px 0 0; padding: 10px 18px 16px; transform: translateY(105%); transition: transform .2s ease-out;
+  }
+  .sheet.on { transform: translateY(0); }
+  .alca { width: 40px; height: 4px; border-radius: 2px; background: #ffffff33; margin: 0 auto 12px; }
+  .sheet .titulo { font-size: 12px; color: var(--texto-2); margin: 0 0 6px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sheet .opcao {
+    display: flex; align-items: center; gap: 12px; height: 48px; font-size: 15px; padding: 0 4px; width: 100%;
+    background: none; border: 0; border-bottom: 1px solid #28699355; color: var(--texto); font-family: inherit; cursor: pointer; text-align: left;
+  }
+  .sheet .opcao.perigo { color: var(--vermelho); }
+  .sheet .opcao span { width: 22px; text-align: center; }
+
+  /* Modal Nova / Renomear */
+  .modal {
+    position: absolute; left: 18px; right: 18px; top: 150px; background: var(--fundo); border: 1px solid var(--borda);
+    border-radius: 14px; padding: 18px; opacity: 0; transform: scale(.96); pointer-events: none; transition: opacity .15s, transform .15s;
+  }
+  .modal.on { opacity: 1; transform: none; pointer-events: auto; }
+  .modal h3 { margin: 0 0 14px; font-size: 17px; }
+  .rotulo { font-size: 11px; color: var(--texto-2); margin: 0 0 6px 2px; }
+  .campo {
+    background: var(--superficie); border: 1px solid var(--borda); border-radius: 10px; height: 50px;
+    display: flex; align-items: center; gap: 10px; padding: 0 12px; margin-bottom: 14px;
+  }
+  .campo:focus-within { border-color: #4A9BD0; }
+  .campo .ic { color: var(--texto-2); width: 20px; text-align: center; }
+  .campo input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--texto); font: inherit; font-size: 14px; }
+
+  /* FancyDialog */
+  .dialog {
+    position: absolute; left: 26px; right: 26px; top: 50%; transform: translateY(-50%) scale(.9);
+    background: #FFFFFF; border-radius: 14px; padding: 22px 20px 18px; text-align: center;
+    opacity: 0; pointer-events: none; transition: opacity .15s, transform .15s;
+  }
+  .dialog.on { opacity: 1; transform: translateY(-50%); pointer-events: auto; }
+  .dialog .icone {
+    width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--cor); color: var(--cor);
+    display: grid; place-items: center; font-size: 32px; font-weight: 800; margin: 0 auto 12px;
+  }
+  .dialog h4 { margin: 0 0 8px; font-size: 19px; color: var(--dlg-titulo); }
+  .dialog p { margin: 0 0 18px; font-size: 14px; color: var(--dlg-msg); line-height: 1.45; }
+  .dialog .botoes { display: flex; gap: 10px; }
+  .dialog .botoes button { flex: 1; height: 44px; border-radius: 20px; border: 0; font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer; }
+  .dialog .sim { background: var(--primaria); color: #fff; }
+  .dialog .nao { background: #EEEEEE; color: var(--dlg-titulo); }
+
+  /* Loading */
+  .loading { position: absolute; inset: 0; background: #181F3DCC; display: none; place-items: center; }
+  .loading.on { display: grid; }
+  .spinner { width: 54px; height: 54px; border-radius: 50%; border: 5px solid #ffffff22; border-top-color: var(--primaria); animation: gira .8s linear infinite; }
+  @keyframes gira { to { transform: rotate(360deg); } }
+
+  /* Painel de cenários */
+  .painel { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 16px; }
+  .bloco { background: var(--painel); border: 1px solid #ffffff14; border-radius: 12px; padding: 16px; }
+  .bloco h2 { margin: 0 0 4px; font-size: 15px; }
+  .bloco > p { margin: 0 0 12px; font-size: 12px; color: var(--texto-2); line-height: 1.5; }
+  .bloco code { color: var(--texto); font-size: 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font: inherit; font-size: 13px; color: var(--texto); background: var(--superficie); border: 1px solid var(--borda);
+    border-radius: 20px; padding: 6px 14px; cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { background: var(--primaria); border-color: var(--primaria); font-weight: 700; }
+  .opcoes { display: flex; flex-direction: column; gap: 8px; }
+  .opcoes label { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.4; cursor: pointer; }
+  .opcoes label b { color: var(--laranja); font-weight: 700; margin-right: 2px; }
+  .opcoes label small { display: block; color: var(--texto-2); font-size: 12px; }
+  .opcoes input[type=checkbox] { margin-top: 3px; accent-color: var(--primaria); }
+  .latencia { display: flex; align-items: center; gap: 10px; font-size: 13px; margin-top: 6px; }
+  .latencia input { flex: 1; accent-color: var(--primaria); }
+  .latencia output { width: 64px; text-align: right; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+  .log {
+    font-family: Consolas, "Courier New", monospace; font-size: 12px; line-height: 1.5; background: #0A0E24;
+    border-radius: 8px; padding: 10px; height: 230px; overflow-y: auto; margin: 0;
+  }
+  .log div { border-bottom: 1px dashed #ffffff10; padding: 2px 0; word-break: break-word; }
+  .log .h { color: #6B76A8; }
+  .log .ok { color: #7BD88F; }
+  .log .err { color: #FF8A8A; }
+  .log .warn { color: var(--laranja); }
+  .log .info { color: var(--texto-2); }
+  .linha-acoes { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .roteiro { margin: 0; padding-left: 20px; font-size: 13px; color: var(--texto-2); line-height: 1.6; }
+  .roteiro b { color: var(--texto); }
+
+  @media (max-width: 760px) { .painel { min-width: 0; width: 100%; } }
+</style>
+</head>
+<body>
+
+<header class="doc">
+  <h1>Tela de Listas — mock funcional</h1>
+  <p>Simula os fluxos e erros da change OpenSpec <code>openspec/changes/adicionar-tela-listas</code> (specs <code>listas</code> e <code>tela-listas</code>) com dados em memória. Toque no card abre o detalhe (ainda “Em breve”), <code>⋮</code> ou <b>segurar o card ~0,5 s</b> abre o menu. O log ao lado mostra a chamada que a View faria no Delphi e o que voltou.</p>
+</header>
+
+<div class="area">
+
+  <!-- Aparelho -->
+  <div class="aparelho">
+    <div class="phone"><div class="screen" id="tela">
+      <div class="status"><span id="hora">9:41</span><span>▮▮▮ 85%</span></div>
+
+      <div class="topo">
+        <h2>Minhas Listas</h2>
+        <small id="subtitulo"></small>
+      </div>
+
+      <!-- vsbListas -->
+      <div class="conteudo" id="vsbListas" hidden></div>
+
+      <!-- lytVazio -->
+      <div class="estado" id="lytVazio" hidden>
+        <img src="../img/oie_transparent%20(1).png" alt="">
+        <h3>Você ainda não tem listas</h3>
+        <p>Crie uma lista para lançar os itens da feira e ver o total da compra.</p>
+        <div style="width:100%; margin-top:12px"><button class="btn" id="btnPrimeiraLista">Criar minha primeira lista</button></div>
+      </div>
+
+      <!-- lytErro (D1) -->
+      <div class="estado" id="lytErro" hidden>
+        <div class="icone-erro">!</div>
+        <h3>Não foi possível carregar suas listas.</h3>
+        <p>Verifique o armazenamento do aparelho e tente de novo.</p>
+        <div style="width:100%; margin-top:12px"><button class="btn" id="btnTentarNovamente">Tentar novamente</button></div>
+      </div>
+
+      <button class="fab" id="recFab" aria-label="Nova lista" hidden>+</button>
+
+      <!-- lytMenuCard -->
+      <div class="overlay" id="menuOverlay"></div>
+      <div class="sheet" id="menuSheet" aria-hidden="true">
+        <div class="alca"></div>
+        <div class="titulo" id="menuTitulo"></div>
+        <button class="opcao" id="menuRenomear"><span>✎</span>Renomear</button>
+        <button class="opcao perigo" id="menuExcluir"><span>🗑</span>Excluir</button>
+        <button class="btn-texto" id="menuCancelar">Cancelar</button>
+      </div>
+
+      <!-- lytModalLista -->
+      <div class="overlay" id="modalOverlay"></div>
+      <div class="modal" id="modal" aria-hidden="true">
+        <h3 id="modalTitulo">Nova lista</h3>
+        <div class="rotulo">Nome da lista</div>
+        <div class="campo"><span class="ic">✎</span><input id="edtNomeLista" maxlength="60" autocomplete="off" enterkeyhint="done"></div>
+        <button class="btn" id="btnSalvar">Salvar</button>
+        <button class="btn-texto" id="modalCancelar">Cancelar</button>
+      </div>
+
+      <!-- TFancyDialog -->
+      <div class="overlay" id="dialogOverlay"></div>
+      <div class="dialog" id="dialog" role="alertdialog" aria-hidden="true">
+        <div class="icone" id="dlgIcone"></div>
+        <h4 id="dlgTitulo"></h4>
+        <p id="dlgMsg"></p>
+        <div class="botoes">
+          <button class="nao" id="dlgBtn2"></button>
+          <button class="sim" id="dlgBtn1"></button>
+        </div>
+      </div>
+
+      <!-- lytLoading -->
+      <div class="loading" id="lytLoading"><div class="spinner"></div></div>
+    </div></div>
+    <div class="sob-aparelho">
+      <button class="chip" id="btnVoltarAndroid">◁ Voltar (Android)</button>
+      <button class="chip" id="btnRecarregar">↻ Reabrir tela (FormShow)</button>
+    </div>
+  </div>
+
+  <!-- Painel -->
+  <div class="painel">
+
+    <section class="bloco">
+      <h2>Dados no banco</h2>
+      <p>Troca o conteúdo do <code>feira.db</code> simulado e reabre a tela.</p>
+      <div class="chips" id="presets">
+        <button class="chip" data-preset="desenho" aria-pressed="true">Desenho (4 listas)</button>
+        <button class="chip" data-preset="vazio" aria-pressed="false">Vazio</button>
+        <button class="chip" data-preset="muitas" aria-pressed="false">Muitas (15)</button>
+        <button class="chip" data-preset="limite" aria-pressed="false">Casos limite</button>
+      </div>
+    </section>
+
+    <section class="bloco">
+      <h2>Falhas simuladas</h2>
+      <p>Ligadas, valem para a próxima operação daquele tipo. Cobrem os requisitos “Validar nome da lista”, “Tratar falha ao carregar”, “Tratar falha ao salvar ou excluir” e “Tratar lista que deixou de existir”; os códigos E0x são só rótulos do mock.</p>
+      <div class="opcoes">
+        <label><input type="checkbox" id="fCarregar"><span><b>E04</b> Falha ao carregar<small>DAO levanta erro do FireDAC no <code>Listar</code> → mensagem genérica + estado de erro.</small></span></label>
+        <label><input type="checkbox" id="fSalvar"><span><b>E05</b> Falha ao salvar<small><code>database is locked</code> no INSERT/UPDATE → modal continua aberto.</small></span></label>
+        <label><input type="checkbox" id="fExcluir"><span><b>E06</b> Falha ao excluir<small>Erro técnico no DELETE → card continua na tela.</small></span></label>
+        <label><input type="checkbox" id="fNaoEncontrada"><span><b>E03</b> Lista já não existe<small>Ao renomear/excluir, a lista some do banco antes → aviso e recarga.</small></span></label>
+        <label><input type="checkbox" id="fSemMaxLength"><span><b>E02</b> Desligar <code>MaxLength</code> do campo<small>Permite digitar &gt; 60 para ver a regra do Model.</small></span></label>
+      </div>
+      <div class="latencia">
+        <span>Latência</span>
+        <input type="range" id="latencia" min="0" max="3000" step="100" value="500">
+        <output id="latenciaValor">500 ms</output>
+      </div>
+    </section>
+
+    <section class="bloco">
+      <div class="linha-acoes"><h2>Log (View → Controller → Model)</h2><button class="chip" id="btnLimparLog">Limpar</button></div>
+      <div class="log" id="log" aria-live="polite"></div>
+    </section>
+
+    <section class="bloco">
+      <h2>Roteiro sugerido</h2>
+      <ol class="roteiro">
+        <li><b>Criar</b>: “+”, aceitar “Feira dd/mm” → vai para o topo e o contador sobe.</li>
+        <li><b>E01</b>: apagar o nome (ou só espaços) e salvar → aviso, modal fica com o texto.</li>
+        <li><b>E02</b>: ligar “Desligar MaxLength”, colar um nome longo → aviso.</li>
+        <li><b>Renomear / Excluir</b> pelo <code>⋮</code> e pelo toque longo; conferir a mensagem com 0, 1 e N itens (preset “Casos limite”).</li>
+        <li><b>Excluir a última</b> lista → estado vazio, “+” some.</li>
+        <li><b>E03–E06</b>: ligar cada falha e repetir a operação.</li>
+        <li><b>Rolagem</b>: preset “Muitas”, arrastar começando em cima de um card → não deve abrir o card; último card não fica atrás do “+”.</li>
+        <li><b>Voltar do Android</b> com modal aberto, com menu aberto e sem nada aberto.</li>
+      </ol>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Textos (equivalem a uListaMessages) ---------- */
+  var MSG = {
+    Nome_Lista_Obrigatorio: 'Informe o nome da lista.',
+    Nome_Lista_Muito_Grande: 'O nome da lista pode ter no máximo 60 caracteres.',
+    Lista_Nao_Encontrada: 'Esta lista não existe mais. Atualizamos a tela para você.',
+    Erro_Carregar_Listas: 'Não foi possível carregar suas listas. Tente novamente.',
+    Erro_Salvar_Lista: 'Não foi possível salvar a lista. Tente novamente.',
+    Erro_Excluir_Lista: 'Não foi possível excluir a lista. Tente novamente.'
+  };
+  var NOME_MAX = 60;
+
+  /* ---------- Exceções ---------- */
+  function ExcecaoApp(classe, mensagem, codigo) {
+    this.classe = classe; this.message = mensagem; this.codigo = codigo; this.app = true;
+  }
+  function ExcecaoTecnica(classe, mensagem) {
+    this.classe = classe; this.message = mensagem; this.app = false;
+  }
+
+  /* ---------- Formatação (5.4) ---------- */
+  var fmtValor = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function brl(v) { return 'R$ ' + fmtValor.format(v); }
+  function dois(n) { return (n < 10 ? '0' : '') + n; }
+  function dataBR(d) { return dois(d.getDate()) + '/' + dois(d.getMonth() + 1) + '/' + d.getFullYear(); }
+  function nomeSugerido() { var d = new Date(); return 'Feira ' + dois(d.getDate()) + '/' + dois(d.getMonth() + 1); }
+  function resumoItens(c, n) {
+    if (n === 0) return 'nenhum item';
+    if (n === 1) return c + ' de 1 item';
+    return c + ' de ' + n + ' itens';
+  }
+  function subtitulo(n) { return n === 0 ? 'nenhuma lista' : n === 1 ? '1 lista' : n + ' listas'; }
+  function msgExclusao(nome, n) {
+    var q = '“' + nome + '”';
+    if (n === 0) return q + ' será excluída. Essa ação não pode ser desfeita.';
+    if (n === 1) return q + ' e seu 1 item serão excluídos. Essa ação não pode ser desfeita.';
+    return q + ' e seus ' + n + ' itens serão excluídos. Essa ação não pode ser desfeita.';
+  }
+  function pas(s) { return "'" + String(s).replace(/'/g, "''") + "'"; }
+
+  /* ---------- "Banco" ---------- */
+  function d(dia, mes, ano) { return new Date(ano || 2026, mes - 1, dia, 9, 0, 0); }
+  function lista(id, nome, data, qtd, conc, total) {
+    return { id: id, nome: nome, dataCriacao: data, qtdItens: qtd, qtdConcluidos: conc, total: total };
+  }
+  var PRESETS = {
+    desenho: function () {
+      return [
+        lista(4, 'Feira do sábado', d(30, 10), 6, 4, 37.40),
+        lista(5, 'Churrasco domingo', d(28, 10), 7, 7, 142.90),
+        lista(6, 'Frutas da semana', d(21, 10), 5, 2, 31.50),
+        lista(7, 'Feira 14/10', d(14, 10), 0, 0, 0)
+      ];
+    },
+    vazio: function () { return []; },
+    muitas: function () {
+      var nomes = ['Feira do sábado', 'Hortifruti', 'Churrasco', 'Café da manhã', 'Festa da Ana', 'Feira da semana', 'Sacolão',
+                   'Frutas', 'Verduras', 'Almoço de domingo', 'Lanche da escola', 'Feira do bairro', 'Mercado', 'Peixaria', 'Feirinha'];
+      return nomes.map(function (nome, i) {
+        var qtd = (i * 3) % 9, conc = Math.min(qtd, (i * 2) % 7);
+        return lista(i + 1, nome, d(30 - i * 2 > 0 ? 30 - i * 2 : 1, i < 14 ? 10 : 9), qtd, conc, conc * (3.75 + i));
+      });
+    },
+    limite: function () {
+      var nomeLongo = 'Compras do mês para a casa de praia com toda a família reunida'.slice(0, NOME_MAX);
+      return [
+        lista(11, nomeLongo, d(31, 10), 3, 3, 12345.67),
+        lista(12, 'Um item, não concluído', d(29, 10), 1, 0, 0),
+        lista(13, 'Um item concluído sem preço', d(27, 10), 1, 1, 0),
+        lista(14, 'Lista sem itens', d(25, 10), 0, 0, 0),
+        lista(15, 'Feira 30/10', d(24, 10), 2, 1, 4.5),
+        lista(16, 'Feira 30/10', d(24, 10), 0, 0, 0)
+      ];
+    }
+  };
+  var banco = [];
+  var proximoId = 100;
+
+  /* ---------- Model (simula IFeiraOrganizadaModelLista) ---------- */
+  var falhas = {
+    carregar: el('fCarregar'), salvar: el('fSalvar'), excluir: el('fExcluir'), naoEncontrada: el('fNaoEncontrada')
+  };
+
+  function atraso() { return +el('latencia').value; }
+
+  function executar(fn) {
+    return new Promise(function (ok, erro) {
+      setTimeout(function () { try { ok(fn()); } catch (e) { erro(e); } }, atraso());
+    });
+  }
+
+  var Model = {
+    Listar: function () {
+      return executar(function () {
+        if (falhas.carregar.checked)
+          throw new ExcecaoTecnica('EFDException', '[FireDAC][Phys][SQLite] ERROR: database disk image is malformed');
+        return banco
+          .slice()
+          .sort(function (a, b) { return (b.dataCriacao - a.dataCriacao) || (b.id - a.id); })
+          .map(function (l) { return Object.assign({}, l); });
+      });
+    },
+    Salvar: function (id, nome) {
+      return executar(function () {
+        var n = String(nome).trim();
+        if (n === '') throw new ExcecaoApp('ENomeListaObrigatorio', MSG.Nome_Lista_Obrigatorio, 'E01');
+        if (n.length > NOME_MAX) throw new ExcecaoApp('ENomeListaMuitoGrande', MSG.Nome_Lista_Muito_Grande, 'E02');
+        if (id > 0) sumirSeSimulado(id);
+        if (falhas.salvar.checked)
+          throw new ExcecaoTecnica('EFDException', '[FireDAC][Phys][SQLite] ERROR: database is locked');
+        if (id === 0) {
+          banco.push(lista(proximoId++, n, new Date(), 0, 0, 0));
+          return 'INSERT id=' + (proximoId - 1);
+        }
+        var alvo = acharOuFalhar(id);
+        alvo.nome = n;
+        return 'UPDATE 1 linha';
+      });
+    },
+    Excluir: function (id) {
+      return executar(function () {
+        sumirSeSimulado(id);
+        if (falhas.excluir.checked)
+          throw new ExcecaoTecnica('EFDException', '[FireDAC][Phys][SQLite] ERROR: disk I/O error');
+        var alvo = acharOuFalhar(id);
+        banco.splice(banco.indexOf(alvo), 1);
+        return 'DELETE 1 linha (+ ' + alvo.qtdItens + ' itens via CASCADE)';
+      });
+    }
+  };
+
+  function sumirSeSimulado(id) {
+    if (!falhas.naoEncontrada.checked) return;
+    banco = banco.filter(function (l) { return l.id !== id; });
+  }
+  function acharOuFalhar(id) {
+    var alvo = banco.find(function (l) { return l.id === id; });
+    if (!alvo) throw new ExcecaoApp('EListaNaoEncontrada', MSG.Lista_Nao_Encontrada, 'E03');
+    return alvo;
+  }
+
+  /* ---------- Log ---------- */
+  function log(tipo, texto) {
+    var linha = document.createElement('div');
+    var h = new Date();
+    var hora = document.createElement('span');
+    hora.className = 'h';
+    hora.textContent = dois(h.getHours()) + ':' + dois(h.getMinutes()) + ':' + dois(h.getSeconds()) + ' ';
+    var corpo = document.createElement('span');
+    corpo.className = tipo;
+    corpo.textContent = texto;
+    linha.appendChild(hora); linha.appendChild(corpo);
+    var caixa = el('log');
+    caixa.appendChild(linha);
+    caixa.scrollTop = caixa.scrollHeight;
+  }
+
+  /* ---------- View ---------- */
+  function el(id) { return document.getElementById(id); }
+  var ocupado = false;           // FThreading.IsRunning
+  var menuAtual = null;          // FIdMenu / FNomeMenu / FQtdItensMenu
+  var modalId = null;            // null = fechado; 0 = nova; >0 = renomear
+
+  function ExibirLoading() { ocupado = true; el('lytLoading').classList.add('on'); }
+  function EsconderLoading() { ocupado = false; el('lytLoading').classList.remove('on'); }
+
+  function ExibirEstado(estado) {
+    el('vsbListas').hidden = estado !== 'lista';
+    el('lytVazio').hidden = estado !== 'vazio';
+    el('lytErro').hidden = estado !== 'erro';
+    el('recFab').hidden = estado !== 'lista';
+  }
+
+  function ExibirErro(e, msgGenerica) {
+    if (e.app) {
+      var aviso = e.codigo === 'E01' || e.codigo === 'E02' || e.codigo === 'E03';
+      log('err', '← ' + e.classe + ' (' + e.codigo + '): ' + e.message);
+      Dialog.show(aviso ? 'Warning' : 'Error', aviso ? 'Atenção' : 'Ops!', e.message);
+    } else {
+      log('err', '← ' + e.classe + ': ' + e.message);
+      log('warn', '  exibido ao usuário: mensagem genérica (texto técnico não aparece)');
+      Dialog.show('Error', 'Ops!', msgGenerica);
+    }
+  }
+
+  function CarregarListas() {
+    if (ocupado) { log('info', 'ignorado: FThreading.IsRunning'); return; }
+    ExibirLoading();
+    log('info', '→ FController.Model.Lista.Listar');
+    Model.Listar().then(function (listas) {
+      log('ok', '← OK, ' + listas.length + (listas.length === 1 ? ' lista' : ' listas'));
+      RenderizarListas(listas);
+    }, function (e) {
+      el('subtitulo').textContent = '';
+      ExibirEstado('erro');
+      ExibirErro(e, MSG.Erro_Carregar_Listas);
+    }).then(EsconderLoading);
+  }
+
+  function RenderizarListas(listas) {
+    var vsb = el('vsbListas');
+    vsb.textContent = '';
+    listas.forEach(function (l) { vsb.appendChild(CriarCard(l)); });
+    el('subtitulo').textContent = subtitulo(listas.length);
+    ExibirEstado(listas.length ? 'lista' : 'vazio');
+  }
+
+  /* TFrameCardLista */
+  function CriarCard(l) {
+    var card = document.createElement('div');
+    card.className = 'card';
+    card.style.setProperty('--faixa', 'var(--toldo-' + (l.id % 4) + ')');
+
+    var info = document.createElement('div'); info.className = 'info';
+    var nome = document.createElement('div'); nome.className = 'nome'; nome.textContent = l.nome; nome.title = l.nome;
+    var meta = document.createElement('div'); meta.className = 'meta';
+    meta.textContent = dataBR(l.dataCriacao) + ' · ' + resumoItens(l.qtdConcluidos, l.qtdItens);
+    info.appendChild(nome); info.appendChild(meta);
+
+    var valor = document.createElement('div'); valor.className = 'valor';
+    valor.textContent = brl(l.total);
+    var leg = document.createElement('small'); leg.textContent = 'concluído';
+    valor.appendChild(leg);
+
+    var mais = document.createElement('button'); mais.className = 'mais'; mais.textContent = '⋮';
+    mais.setAttribute('aria-label', 'Opções de ' + l.nome);
+
+    card.appendChild(info); card.appendChild(valor); card.appendChild(mais);
+
+    var dados = { id: l.id, nome: l.nome, qtdItens: l.qtdItens };
+
+    mais.addEventListener('click', function (ev) { ev.stopPropagation(); AbrirMenu(dados, '⋮'); });
+    mais.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
+
+    // Toque x rolagem x toque longo (5.2)
+    var inicio = null, timer = null, ignorarClick = false;
+    card.addEventListener('pointerdown', function (ev) {
+      inicio = { x: ev.clientX, y: ev.clientY, scroll: el('vsbListas').scrollTop };
+      ignorarClick = false;
+      card.classList.add('pressionado');
+      timer = setTimeout(function () {
+        ignorarClick = true;
+        card.classList.remove('pressionado');
+        AbrirMenu(dados, 'toque longo');
+      }, 500);
+    });
+    function cancelar() { clearTimeout(timer); card.classList.remove('pressionado'); }
+    card.addEventListener('pointermove', function (ev) {
+      if (!inicio) return;
+      if (Math.abs(ev.clientX - inicio.x) > 10 || Math.abs(ev.clientY - inicio.y) > 10) { ignorarClick = true; cancelar(); }
+    });
+    card.addEventListener('pointerleave', cancelar);
+    card.addEventListener('pointercancel', function () { ignorarClick = true; cancelar(); });
+    card.addEventListener('pointerup', cancelar);
+    card.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
+    card.addEventListener('click', function () {
+      var rolou = inicio && Math.abs(el('vsbListas').scrollTop - inicio.scroll) > 10;
+      if (ignorarClick || rolou) { log('info', 'click do card ignorado (rolagem ou toque longo)'); return; }
+      AbrirLista(dados);
+    });
+    return card;
+  }
+
+  function AbrirLista(dados) {
+    if (ocupado) return;
+    log('info', '→ OnAbrir(IdLista=' + dados.id + ') — Detalhe ainda não existe (D3)');
+    Dialog.show('Info', 'Em breve', 'O detalhe de “' + dados.nome + '” chega na próxima etapa.');
+  }
+
+  /* Menu (action sheet) */
+  function AbrirMenu(dados, origem) {
+    if (ocupado) return;
+    menuAtual = dados;
+    log('info', '→ OnMenu(IdLista=' + dados.id + ') via ' + origem);
+    el('menuTitulo').textContent = dados.nome;
+    el('menuOverlay').classList.add('on');
+    el('menuSheet').classList.add('on');
+    el('menuSheet').setAttribute('aria-hidden', 'false');
+  }
+  function FecharMenu() {
+    el('menuOverlay').classList.remove('on');
+    el('menuSheet').classList.remove('on');
+    el('menuSheet').setAttribute('aria-hidden', 'true');
+  }
+  function menuAberto() { return el('menuSheet').classList.contains('on'); }
+
+  /* Modal Nova / Renomear */
+  function AbrirModal(id, nome) {
+    if (ocupado) return;
+    modalId = id;
+    el('modalTitulo').textContent = id === 0 ? 'Nova lista' : 'Renomear lista';
+    var edt = el('edtNomeLista');
+    edt.value = id === 0 ? nomeSugerido() : nome;
+    if (el('fSemMaxLength').checked) edt.removeAttribute('maxlength'); else edt.setAttribute('maxlength', NOME_MAX);
+    el('modalOverlay').classList.add('on');
+    el('modal').classList.add('on');
+    el('modal').setAttribute('aria-hidden', 'false');
+    setTimeout(function () { edt.focus(); edt.select(); }, 60);
+    log('info', '→ AbrirModal(' + id + ', ' + pas(edt.value) + ')');
+  }
+  function FecharModal() {
+    modalId = null;
+    el('modalOverlay').classList.remove('on');
+    el('modal').classList.remove('on');
+    el('modal').setAttribute('aria-hidden', 'true');
+    el('edtNomeLista').blur();
+  }
+  function modalAberto() { return modalId !== null; }
+
+  function SalvarLista() {
+    if (ocupado) { log('info', 'ignorado: FThreading.IsRunning'); return; }
+    var id = modalId, nome = el('edtNomeLista').value;
+    ExibirLoading();
+    log('info', '→ FController.Model.Lista.Id(' + id + ').Nome(' + pas(nome) + ').Salvar');
+    Model.Salvar(id, nome).then(function (r) {
+      log('ok', '← OK, ' + r);
+      FecharModal();
+      EsconderLoading();
+      el('vsbListas').scrollTop = 0;
+      CarregarListas();
+    }, function (e) {
+      EsconderLoading();
+      if (e.codigo === 'E03') { FecharModal(); ExibirErro(e); CarregarListas(); return; }
+      ExibirErro(e, MSG.Erro_Salvar_Lista);
+    });
+  }
+
+  /* Excluir */
+  function PedirExclusao(dados) {
+    log('info', '→ FDialog.Tag := ' + dados.id + '; FDialog.Show(Warning, Excluir lista?)');
+    Dialog.show('Warning', 'Excluir lista?', msgExclusao(dados.nome, dados.qtdItens), 'Excluir', function () {
+      ConfirmarExclusao(dados.id);
+    }, 'Cancelar', function () { log('info', 'exclusão cancelada'); });
+  }
+  function ConfirmarExclusao(id) {
+    if (ocupado) return;
+    ExibirLoading();
+    log('info', '→ FController.Model.Lista.Id(' + id + ').Excluir');
+    Model.Excluir(id).then(function (r) {
+      log('ok', '← OK, ' + r);
+      EsconderLoading();
+      CarregarListas();
+    }, function (e) {
+      EsconderLoading();
+      ExibirErro(e, MSG.Erro_Excluir_Lista);
+      if (e.codigo === 'E03') CarregarListas();
+    });
+  }
+
+  /* TFancyDialog */
+  var Dialog = (function () {
+    var icones = {
+      Warning: { cor: 'var(--laranja)', txt: '!' },
+      Error: { cor: 'var(--vermelho)', txt: '✕' },
+      Info: { cor: 'var(--azul)', txt: 'i' },
+      Question: { cor: 'var(--cinza)', txt: '?' },
+      Success: { cor: '#35BD27', txt: '✓' }
+    };
+    var cb1 = null, cb2 = null;
+    function fechar() {
+      el('dialog').classList.remove('on');
+      el('dialogOverlay').classList.remove('on');
+      el('dialog').setAttribute('aria-hidden', 'true');
+    }
+    el('dlgBtn1').addEventListener('click', function () { var c = cb1; fechar(); if (c) c(); });
+    el('dlgBtn2').addEventListener('click', function () { var c = cb2; fechar(); if (c) c(); });
+    return {
+      show: function (icone, titulo, msg, texto1, callback1, texto2, callback2) {
+        var i = icones[icone];
+        el('dlgIcone').style.setProperty('--cor', i.cor);
+        el('dlgIcone').textContent = i.txt;
+        el('dlgTitulo').textContent = titulo;
+        el('dlgMsg').textContent = msg;
+        el('dlgBtn1').textContent = texto1 || 'OK';
+        el('dlgBtn2').textContent = texto2 || '';
+        el('dlgBtn2').hidden = !texto2;
+        cb1 = callback1 || null; cb2 = callback2 || null;
+        el('dialogOverlay').classList.add('on');
+        el('dialog').classList.add('on');
+        el('dialog').setAttribute('aria-hidden', 'false');
+        setTimeout(function () { el('dlgBtn1').focus(); }, 30);
+      },
+      aberto: function () { return el('dialog').classList.contains('on'); },
+      fechar: fechar
+    };
+  })();
+
+  /* Voltar do Android (4.7) */
+  function Voltar() {
+    if (ocupado) { log('info', 'voltar: loading visível → ignorado'); return; }
+    if (Dialog.aberto()) { log('info', 'voltar: fecha o dialog'); Dialog.fechar(); return; }
+    if (modalAberto()) { log('info', 'voltar: fecha o modal'); FecharModal(); return; }
+    if (menuAberto()) { log('info', 'voltar: fecha o menu'); FecharMenu(); return; }
+    log('warn', 'voltar: nada aberto → sai do app (comportamento padrão)');
+  }
+
+  /* ---------- Eventos ---------- */
+  el('recFab').addEventListener('click', function () { AbrirModal(0, ''); });
+  el('btnPrimeiraLista').addEventListener('click', function () { AbrirModal(0, ''); });
+  el('btnTentarNovamente').addEventListener('click', CarregarListas);
+  el('btnSalvar').addEventListener('click', SalvarLista);
+  el('modalCancelar').addEventListener('click', function () { log('info', 'modal cancelado'); FecharModal(); });
+  el('edtNomeLista').addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') { ev.preventDefault(); SalvarLista(); }
+    if (ev.key === 'Escape') { ev.preventDefault(); Voltar(); }
+  });
+  el('menuOverlay').addEventListener('click', FecharMenu);
+  el('menuCancelar').addEventListener('click', FecharMenu);
+  el('menuRenomear').addEventListener('click', function () { var m = menuAtual; FecharMenu(); AbrirModal(m.id, m.nome); });
+  el('menuExcluir').addEventListener('click', function () { var m = menuAtual; FecharMenu(); PedirExclusao(m); });
+  el('btnVoltarAndroid').addEventListener('click', Voltar);
+  el('btnRecarregar').addEventListener('click', function () {
+    if (modalAberto()) FecharModal();
+    if (menuAberto()) FecharMenu();
+    Dialog.fechar();
+    log('info', '— FormShow —');
+    CarregarListas();
+  });
+  el('btnLimparLog').addEventListener('click', function () { el('log').textContent = ''; });
+  el('latencia').addEventListener('input', function () { el('latenciaValor').textContent = this.value + ' ms'; });
+  el('fSemMaxLength').addEventListener('change', function () {
+    var edt = el('edtNomeLista');
+    if (this.checked) edt.removeAttribute('maxlength'); else edt.setAttribute('maxlength', NOME_MAX);
+  });
+  document.querySelectorAll('#presets .chip').forEach(function (botao) {
+    botao.addEventListener('click', function () {
+      if (ocupado) return;
+      document.querySelectorAll('#presets .chip').forEach(function (b) { b.setAttribute('aria-pressed', b === botao ? 'true' : 'false'); });
+      CarregarPreset(botao.dataset.preset);
+    });
+  });
+
+  function CarregarPreset(nome) {
+    banco = PRESETS[nome]();
+    if (modalAberto()) FecharModal();
+    if (menuAberto()) FecharMenu();
+    Dialog.fechar();
+    log('info', '— banco: preset "' + nome + '" (' + banco.length + ' listas) —');
+    CarregarListas();
+  }
+
+  var agora = new Date();
+  el('hora').textContent = agora.getHours() + ':' + dois(agora.getMinutes());
+  CarregarPreset('desenho');
+})();
+</script>
+</body>
+</html>

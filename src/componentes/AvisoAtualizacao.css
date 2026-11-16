@@ -1,0 +1,42 @@
+.aviso-atualizacao {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  top: calc(10px + var(--seguro-topo));
+  transform: translateX(-50%);
+  width: min(100% - 28px, 420px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 10px 16px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-card);
+  box-shadow: 0 8px 24px #00000066;
+  font-size: 14px;
+  font-weight: 700;
+  animation: aviso-subir 0.2s ease-out;
+}
+
+.aviso-atualizacao span {
+  flex: 1;
+}
+
+.aviso-atualizacao-botao {
+  flex: none;
+  height: 38px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--raio-botao);
+  background: var(--primaria);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@keyframes aviso-subir {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+}

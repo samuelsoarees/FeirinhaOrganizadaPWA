@@ -1,0 +1,44 @@
+/* Tokens visuais do app. Valores de docs/PLANEJAMENTO.md (seção 2) e dos mocks em docs/. */
+:root {
+  --fundo: #181f3d;
+  --superficie: #232c51;
+  --superficie-pressionada: #2a3561;
+  --borda: #286993;
+  --borda-foco: #4a9bd0;
+  --primaria: #df255c;
+  --texto: #ffffff;
+  --texto-2: #a9b1d6;
+
+  --dlg-fundo: #ffffff;
+  --dlg-titulo: #2c2c2c;
+  --dlg-msg: #848484;
+  --dlg-botao-secundario: #eeeeee;
+
+  --verde: #2e9e22;
+  --verde-dialog: #35bd27;
+  --vermelho: #e64d4d;
+  --laranja: #f3a867;
+  --azul: #3085d6;
+  --cinza: #aaaaaa;
+
+  --toldo-0: #4bbbbd;
+  --toldo-1: #fdcb6e;
+  --toldo-2: #c2be55;
+  --toldo-3: #e9775f;
+
+  --sombra-overlay: #000000a6;
+
+  --fonte: 'Nunito', system-ui, sans-serif;
+  --tam-titulo: 20px;
+  --tam-corpo: 14px;
+  --tam-secundario: 12px;
+
+  --raio-campo: 10px;
+  --raio-botao: 20px;
+  --raio-card: 14px;
+
+  --seguro-topo: env(safe-area-inset-top, 0px);
+  --seguro-baixo: env(safe-area-inset-bottom, 0px);
+  --seguro-esquerda: env(safe-area-inset-left, 0px);
+  --seguro-direita: env(safe-area-inset-right, 0px);
+}
