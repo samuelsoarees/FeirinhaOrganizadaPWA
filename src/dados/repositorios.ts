@@ -1,14 +1,20 @@
 import { BancoFeira } from './banco'
+import { RepositorioBackup } from './repositorioBackup'
 import { RepositorioItens } from './repositorioItens'
 import { RepositorioListas } from './repositorioListas'
 
 export type Repositorios = {
   listas: RepositorioListas
   itens: RepositorioItens
+  backup: RepositorioBackup
 }
 
 export function criarRepositorios(banco: BancoFeira): Repositorios {
-  return { listas: new RepositorioListas(banco), itens: new RepositorioItens(banco) }
+  return {
+    listas: new RepositorioListas(banco),
+    itens: new RepositorioItens(banco),
+    backup: new RepositorioBackup(banco),
+  }
 }
 
 let banco: BancoFeira | null = null

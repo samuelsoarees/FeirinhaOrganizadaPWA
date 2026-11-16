@@ -23,18 +23,22 @@ A tela de Listas SHALL ter um botão de opções no cabeçalho que abre um menu 
 - **THEN** aparece o dialog "Atenção" com "Você ainda não tem listas para exportar." e nenhum arquivo é gerado
 
 ### Requirement: Importar backup substituindo os dados
-"Importar backup" SHALL abrir o seletor de arquivos do aparelho. Depois de escolhido um backup válido, MUST aparecer o dialog de alerta "Importar backup?" com a mensagem "Suas N listas atuais serão substituídas pelas M listas do backup. Essa ação não pode ser desfeita." e os botões "Importar" e "Cancelar". "Importar" troca todas as listas e itens do aparelho pelos do arquivo, preservando nomes, datas de criação, quantidades, valores e marcações de concluído, e atualiza a tela de Listas.
+"Importar backup" SHALL abrir o seletor de arquivos do aparelho. Depois de escolhido um backup válido, MUST aparecer o dialog de alerta "Importar backup?" com a mensagem "Suas N listas atuais serão substituídas pelas M listas do backup. Essa ação não pode ser desfeita." e os botões "Importar" e "Cancelar". A mensagem concorda com as quantidades: "Sua 1 lista atual será substituída", "pela 1 lista do backup" e, sem listas no aparelho, "As M listas do backup serão importadas." (ou "A 1 lista do backup será importada."). "Importar" troca todas as listas e itens do aparelho pelos do arquivo, preservando nomes, datas de criação, quantidades, valores, marcações de concluído e a ordem das listas e dos itens, e atualiza a tela de Listas.
 
 #### Scenario: Importar backup válido
 - **WHEN** o aparelho tem 2 listas, o usuário escolhe um backup com 3 listas e toca em "Importar"
 - **THEN** a tela de Listas passa a mostrar exatamente as 3 listas do backup, com os mesmos totais e itens que tinham quando foram exportadas
+
+#### Scenario: Importar num aparelho sem listas
+- **WHEN** o aparelho não tem listas e o usuário escolhe um backup com 3 listas
+- **THEN** o dialog "Importar backup?" mostra "As 3 listas do backup serão importadas." e "Importar" traz as 3 listas
 
 #### Scenario: Cancelar a importação
 - **WHEN** o usuário escolhe um backup válido e toca em "Cancelar" no dialog
 - **THEN** nenhuma lista é alterada
 
 ### Requirement: Recusar arquivo inválido
-Se o arquivo escolhido não for um backup do Feira Organizada, estiver corrompido ou trouxer dados que não passam nas regras de listas e itens, o app SHALL mostrar o dialog "Ops!" com "Este arquivo não é um backup válido do Feira Organizada." e MUST NOT alterar nenhum dado.
+Se o arquivo escolhido não for um backup do Feira Organizada, estiver corrompido, não trouxer nenhuma lista ou trouxer dados que não passam nas regras de listas e itens, o app SHALL mostrar o dialog "Ops!" com "Este arquivo não é um backup válido do Feira Organizada." e MUST NOT alterar nenhum dado.
 
 #### Scenario: Arquivo qualquer
 - **WHEN** o usuário escolhe uma foto no seletor de arquivos

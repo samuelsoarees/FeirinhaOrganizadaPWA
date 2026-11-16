@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { AvisoInstalacaoIos } from '../componentes/AvisoInstalacaoIos'
 import { Carregando } from '../componentes/Carregando'
@@ -7,10 +7,12 @@ import { ModalNomeLista } from '../componentes/ModalNomeLista'
 import { useDialog } from '../componentes/useDialog'
 import { useOperacao } from '../componentes/useOperacao'
 import { useRepositorios } from '../componentes/useRepositorios'
+import { backupParaTexto, lerBackup, nomeArquivoBackup } from '../dominio/backup'
 import { ErroNaoEncontrado } from '../dominio/erros'
 import { nomeSugerido, type ResumoLista } from '../dominio/listas'
 import { Mensagens } from '../dominio/mensagens'
 import { abrirDetalhe } from '../navegacao/rotas'
+import { entregarArquivo, lerTextoDoArquivo } from '../pwa/arquivo'
 import { pedirArmazenamentoPersistente } from '../pwa/armazenamento'
 import { useOfertaInstalacao } from '../pwa/instalacao'
 import { CardLista } from './CardLista'
@@ -31,7 +33,9 @@ export function TelaListas() {
   const [estado, setEstado] = useState<EstadoTela>({ fase: 'carregando' })
   const [modal, setModal] = useState<EstadoModal | null>(null)
   const [menu, setMenu] = useState<ResumoLista | null>(null)
+  const [menuBackup, setMenuBackup] = useState(false)
   const rolagem = useRef<HTMLDivElement>(null)
+  const seletorArquivo = useRef<HTMLInputElement>(null)
 
   const carregar = useCallback(async () => {
     const resultado = await executar(() => repositorios.listas.listar(), {
@@ -105,6 +109,62 @@ export function TelaListas() {
 
   const abrirLista = (lista: ResumoLista) => abrirDetalhe(lista.id)
 
+  const exportarBackup = async () => {
+    setMenuBackup(false)
+    const resultado = await executar(() => repositorios.backup.exportar(), {
+      mensagemFalha: Mensagens.backup.falhaExportar,
+    })
+    if (resultado.status !== 'ok') return
+    if (resultado.valor.listas.length === 0) {
+      void mostrarDialog({ icone: 'alerta', titulo: Mensagens.geral.atencao, mensagem: Mensagens.backup.semListas })
+      return
+    }
+    const arquivo = new File([backupParaTexto(resultado.valor)], nomeArquivoBackup(new Date()), {
+      type: 'application/json',
+    })
+    await entregarArquivo(arquivo, Mensagens.backup.tituloArquivo)
+  }
+
+  // O seletor precisa abrir ainda dentro do toque, senão o navegador bloqueia.
+  const escolherArquivoBackup = () => {
+    setMenuBackup(false)
+    seletorArquivo.current?.click()
+  }
+
+  const importarBackup = async (evento: ChangeEvent<HTMLInputElement>) => {
+    const arquivo = evento.target.files?.[0]
+    // Limpa para o mesmo arquivo poder ser escolhido de novo.
+    evento.target.value = ''
+    if (!arquivo) return
+
+    const lido = await executar(
+      async () => {
+        const backup = lerBackup(await lerTextoDoArquivo(arquivo))
+        return { backup, atuais: await repositorios.backup.contarListas() }
+      },
+      { mensagemFalha: Mensagens.backup.falhaImportar },
+    )
+    if (lido.status !== 'ok') return
+
+    const { backup, atuais } = lido.valor
+    const confirmado = await mostrarDialog({
+      icone: 'alerta',
+      titulo: Mensagens.backup.importarTitulo,
+      mensagem: Mensagens.backup.importarMensagem(atuais, backup.listas.length),
+      textoConfirmar: Mensagens.backup.importarConfirmar,
+      textoCancelar: Mensagens.geral.cancelar,
+    })
+    if (!confirmado) return
+
+    const resultado = await executar(() => repositorios.backup.importar(backup), {
+      mensagemFalha: Mensagens.backup.falhaImportar,
+    })
+    if (resultado.status !== 'ok') return
+    void pedirArmazenamentoPersistente()
+    await carregar()
+    if (rolagem.current) rolagem.current.scrollTop = 0
+  }
+
   const listas = estado.fase === 'pronta' ? estado.listas : []
   const temListas = listas.length > 0
   const rodapeVersao = <footer className="rodape-versao">{Mensagens.listas.versao(__VERSAO_APP__)}</footer>
@@ -121,6 +181,14 @@ export function TelaListas() {
             {Mensagens.instalacao.instalarApp}
           </button>
         )}
+        <button
+          type="button"
+          className="botao-opcoes"
+          aria-label={Mensagens.backup.opcoes}
+          onClick={() => setMenuBackup(true)}
+        >
+          ⋮
+        </button>
       </header>
 
       {oferta === 'ios' && <AvisoInstalacaoIos aoDispensar={dispensarIos} />}
@@ -195,6 +263,26 @@ export function TelaListas() {
               ]
             : []
         }
+      />
+
+      <MenuInferior
+        aberto={menuBackup}
+        titulo={Mensagens.backup.titulo}
+        aoFechar={() => setMenuBackup(false)}
+        opcoes={[
+          { rotulo: Mensagens.backup.exportar, icone: '⇪', aoEscolher: () => void exportarBackup() },
+          { rotulo: Mensagens.backup.importar, icone: '⤓', aoEscolher: escolherArquivoBackup },
+        ]}
+      />
+
+      <input
+        ref={seletorArquivo}
+        type="file"
+        className="seletor-arquivo"
+        tabIndex={-1}
+        aria-hidden="true"
+        data-testid="seletor-backup"
+        onChange={(evento) => void importarBackup(evento)}
       />
 
       <ModalNomeLista

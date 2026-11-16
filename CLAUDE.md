@@ -19,7 +19,7 @@ Referências:
 ## Stack e comandos
 
 - **Stack**: Vite + React + TypeScript, IndexedDB via Dexie, vite-plugin-pwa (Workbox), Vitest + Testing Library, ESLint. O projeto fica na raiz do repositório.
-- **Comandos** (a partir da Etapa 1):
+- **Comandos** (`npm ci` antes, com Node.js 24):
   - `npm run dev`: servidor de desenvolvimento;
   - `npm test`: testes;
   - `npm run lint`: lint;
@@ -34,11 +34,14 @@ Referências:
 Decisões completas em `openspec/changes/migrar-para-pwa/design.md`.
 
 - **Pastas** em `src/`:
-  - `dominio/`: regras, validação, totais e formatação. Sem React e sem banco; tudo testável com Vitest.
-  - `dados/`: banco IndexedDB (Dexie) e repositórios. Erros do banco viram `ErroArmazenamento`.
-  - `telas/` e `componentes/`: React. As telas não acessam o Dexie direto.
+  - `dominio/`: regras, validação, totais, formatação e o formato do backup (`backup.ts`). Sem React e sem banco; tudo testável com Vitest.
+  - `dados/`: banco IndexedDB (Dexie) e repositórios de listas, itens e backup. Erros do banco viram `ErroArmazenamento`. A importação do backup apaga e grava tudo numa única transação.
+  - `telas/` e `componentes/`: React. As telas não acessam o Dexie direto, só pelo `useRepositorios`.
   - `navegacao/`: rotas por hash (`#/`, `#/lista/:id`) e pilha de camadas (dialog, modal, menu, painel) ligada ao `history`, para o voltar do Android fechar uma camada por vez.
+  - `pwa/`: oferta de instalação, pedido de armazenamento persistente e entrega de arquivos (Web Share com arquivo ou download).
   - `estilo/`: tokens de cor e fonte, iguais aos dos mocks.
+  - `testes/`: setup do Vitest e banco de teste (`fake-indexeddb`).
 - **Dinheiro**: sempre em **centavos inteiros**. Formatação fixa em pt-BR (`R$ 1.234,56`), independente do idioma do aparelho.
 - **Mensagens ao usuário**: só a partir de `src/dominio/mensagens.ts`, com os textos exatos das specs.
 - **Schema do banco**: cada mudança é uma nova `db.version(n+1)`. Nunca edite uma versão já publicada, porque os usuários perderiam dados.
+- **Formato do backup**: `{ app: 'feira-organizada', versao: 1, exportadoEm, listas: [...com itens] }`, com os ids. Mudar o formato pede uma nova `versao` e a leitura das anteriores, porque os usuários guardam esses arquivos.

@@ -104,19 +104,22 @@
 
 ## 5. Etapa 5 — Backup e encerramento
 
-- [ ] 5.1 Criar o formato do backup (`{ app: 'feira-organizada', versao: 1, exportadoEm, listas: [...com itens] }`) e a validação dele no `dominio/`, reaproveitando as regras de listas e itens. Verificar: testes para backup válido, JSON inválido, `app` diferente, item com quantidade 0 e valor com fração de centavo.
-- [ ] 5.2 Criar no `dados/` a exportação (lê tudo) e a importação (apaga e grava tudo numa única transação). Verificar: teste com `fake-indexeddb` fazendo exportar → importar → resultado idêntico, e falha simulada no meio da importação mantendo os dados anteriores.
-- [ ] 5.3 Criar o botão de opções no cabeçalho de "Minhas Listas" com o menu "Exportar backup", "Importar backup" e "Cancelar". Detalhes:
+- [x] 5.1 Criar o formato do backup (`{ app: 'feira-organizada', versao: 1, exportadoEm, listas: [...com itens] }`) e a validação dele no `dominio/`, reaproveitando as regras de listas e itens. Verificar: testes para backup válido, JSON inválido, `app` diferente, item com quantidade 0 e valor com fração de centavo.
+- [x] 5.2 Criar no `dados/` a exportação (lê tudo) e a importação (apaga e grava tudo numa única transação). Verificar: teste com `fake-indexeddb` fazendo exportar → importar → resultado idêntico, e falha simulada no meio da importação mantendo os dados anteriores.
+- [x] 5.3 Criar o botão de opções no cabeçalho de "Minhas Listas" com o menu "Exportar backup", "Importar backup" e "Cancelar". Detalhes:
   - a exportação usa o compartilhamento do sistema (Web Share com arquivo) quando disponível e, senão, o download de `feira-organizada-backup-AAAA-MM-DD.json`;
   - a importação usa `<input type="file">`, mostra a confirmação com N e M e trata arquivo inválido e falha;
   - sem listas, mostra o aviso.
 
   Verificar: testes de tela para exportar sem listas, importar arquivo inválido e importar com confirmação.
-- [ ] 5.4 Atualizar a documentação:
+  - **Notas (16/11/2026):** o backup leva os ids, para a importação manter a ordem das listas e dos itens e a cor do toldo. A leitura recusa ids repetidos, datas fora do formato ISO gravado pelo app e backup sem listas. A mensagem de confirmação concorda com as quantidades ("Sua 1 lista atual", "pela 1 lista do backup") e, sem listas no aparelho, vira "As M listas do backup serão importadas."; a spec `backup-dados` foi atualizada com essas variações. O Chrome do Android não compartilha `.json` pelo Web Share (o `canShare` recusa), então lá a exportação cai no download; no Safari do iPhone abre a folha de compartilhamento. O seletor de arquivos não filtra o tipo, para a foto do roteiro 5.5 poder ser escolhida e recusada.
+  - **Andamento (16/11/2026):** conferido no `npm run dev` a 375 px: menu de opções, aviso sem listas, importação de 3 listas, exportação com o nome `feira-organizada-backup-2026-11-16.json` e foto recusada. Lint, 266 testes e build passam na versão `26.11.3`.
+- [x] 5.4 Atualizar a documentação:
   - `CLAUDE.md` e `README`: como rodar, testar e publicar, e a estrutura de pastas final;
   - no repositório Delphi (`Feira_Organizada`), um aviso no README apontando para este repositório como o produto atual.
 
   Verificar: `openspec validate migrar-para-pwa --strict` passa e os comandos documentados funcionam num clone limpo (`npm ci && npm test && npm run build`).
+  - **Andamento (16/11/2026):** criado o `README.md` deste repositório (não existia) e atualizado o `CLAUDE.md`. No repositório Delphi foi criado o `README.md` com o aviso, ainda sem commit lá. `openspec validate --strict` passa e, num clone limpo com estas mudanças, `npm ci`, `npm test` (266 testes) e `npm run build` passam.
 - [ ] 5.5 **Validação final no celular — ponto de parada.** Nos dois aparelhos:
   - exportar o backup e salvar ou compartilhar o arquivo;
   - excluir todas as listas;

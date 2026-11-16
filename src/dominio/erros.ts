@@ -22,7 +22,16 @@ export class ErroNaoEncontrado extends Error {
   }
 }
 
-export type OperacaoArmazenamento = 'listar' | 'salvar' | 'excluir' | 'marcar'
+// O arquivo escolhido não é um backup do app, está corrompido ou traz dados fora das regras.
+// A tela mostra "Ops!" com a mensagem de arquivo inválido.
+export class ErroBackupInvalido extends Error {
+  constructor(mensagem: string, causa?: unknown) {
+    super(mensagem, { cause: causa })
+    this.name = 'ErroBackupInvalido'
+  }
+}
+
+export type OperacaoArmazenamento = 'listar' | 'salvar' | 'excluir' | 'marcar' | 'exportar' | 'importar'
 
 // Falha técnica do banco. A tela nunca mostra o texto técnico, só a mensagem genérica da operação.
 export class ErroArmazenamento extends Error {

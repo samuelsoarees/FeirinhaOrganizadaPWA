@@ -495,3 +495,240 @@ describe('voltar do Android', () => {
     expect(screen.queryByRole('dialog', { name: 'Nova lista' })).not.toBeInTheDocument()
   })
 })
+
+describe('backup', () => {
+  const MENSAGEM_INVALIDO = 'Este arquivo não é um backup válido do Feira Organizada.'
+
+  function abrirOpcoes() {
+    fireEvent.click(screen.getByRole('button', { name: 'Opções' }))
+    return screen.getByRole('dialog', { name: 'Backup' })
+  }
+
+  function seletor(): HTMLInputElement {
+    return screen.getByTestId('seletor-backup')
+  }
+
+  function escolherArquivo(arquivo: File) {
+    fireEvent.change(seletor(), { target: { files: [arquivo] } })
+  }
+
+  function arquivoJson(dados: unknown, nome = 'feira-organizada-backup-2026-11-16.json') {
+    return new File([JSON.stringify(dados)], nome, { type: 'application/json' })
+  }
+
+  function backupCom(listas: { id: number; nome: string; itens?: unknown[] }[]) {
+    return {
+      app: 'feira-organizada',
+      versao: 1,
+      exportadoEm: '2026-11-16T13:00:00.000Z',
+      listas: listas.map((lista, i) => ({
+        id: lista.id,
+        nome: lista.nome,
+        dataCriacao: new Date(2026, 9, 10 + i, 9).toISOString(),
+        itens: lista.itens ?? [],
+      })),
+    }
+  }
+
+  const tresListas = () =>
+    backupCom([
+      {
+        id: 1,
+        nome: 'Feira do sábado',
+        itens: [
+          { id: 1, descricao: 'Tomate', unidade: 'UN', quantidade: 2, valorUnitarioCentavos: 850, concluido: true },
+          { id: 2, descricao: 'Alface', unidade: 'UN', quantidade: 1, valorUnitarioCentavos: 300, concluido: false },
+        ],
+      },
+      { id: 2, nome: 'Churrasco' },
+      { id: 3, nome: 'Frutas', itens: [{ id: 3, descricao: 'Maçã', unidade: 'UN', quantidade: 6, valorUnitarioCentavos: 125, concluido: true }] },
+    ])
+
+  async function nomesDasListas() {
+    return (await banco.listas.toArray()).map((l) => l.nome).sort()
+  }
+
+  it('o botão de opções abre o menu com exportar, importar e cancelar', async () => {
+    renderizar()
+    await screen.findByText('Você ainda não tem listas')
+    const menu = abrirOpcoes()
+    expect(within(menu).getByRole('button', { name: /Exportar backup/ })).toBeInTheDocument()
+    expect(within(menu).getByRole('button', { name: /Importar backup/ })).toBeInTheDocument()
+    fireEvent.click(within(menu).getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByRole('dialog', { name: 'Backup' })).not.toBeInTheDocument()
+  })
+
+  it('o voltar do Android fecha o menu de opções', async () => {
+    renderizar()
+    await screen.findByText('Você ainda não tem listas')
+    abrirOpcoes()
+    voltarDoAndroid()
+    expect(screen.queryByRole('dialog', { name: 'Backup' })).not.toBeInTheDocument()
+  })
+
+  it('exportar sem listas mostra o aviso e não gera arquivo', async () => {
+    const criarUrl = vi.fn(() => 'blob:x')
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: criarUrl, revokeObjectURL: vi.fn() }))
+    onTestFinished(() => {
+      vi.unstubAllGlobals()
+    })
+
+    renderizar()
+    await screen.findByText('Você ainda não tem listas')
+    fireEvent.click(within(abrirOpcoes()).getByRole('button', { name: /Exportar backup/ }))
+
+    await waitFor(() => expect(dialog()).toHaveTextContent('Você ainda não tem listas para exportar.'))
+    expect(dialog()).toHaveTextContent('Atenção')
+    expect(criarUrl).not.toHaveBeenCalled()
+  })
+
+  it('exportar baixa o arquivo com a data do dia quando não há compartilhamento', async () => {
+    await criarLista('Feira do sábado', new Date(2026, 9, 30, 9), [{ quantidade: 2, valorUnitarioCentavos: 850, concluido: true }])
+    let arquivoGerado: Blob | undefined
+    vi.stubGlobal(
+      'URL',
+      Object.assign(URL, {
+        createObjectURL: vi.fn((blob: Blob) => {
+          arquivoGerado = blob
+          return 'blob:backup'
+        }),
+        revokeObjectURL: vi.fn(),
+      }),
+    )
+    onTestFinished(() => {
+      vi.unstubAllGlobals()
+    })
+    const cliques: HTMLAnchorElement[] = []
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      cliques.push(this)
+    })
+
+    renderizar()
+    await screen.findByText('Feira do sábado')
+    fireEvent.click(within(abrirOpcoes()).getByRole('button', { name: /Exportar backup/ }))
+
+    await waitFor(() => expect(cliques).toHaveLength(1))
+    const hoje = new Date()
+    const data = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
+    expect(cliques[0].download).toBe(`feira-organizada-backup-${data}.json`)
+    const conteudo = JSON.parse(await arquivoGerado!.text())
+    expect(conteudo).toMatchObject({ app: 'feira-organizada', versao: 1 })
+    expect(conteudo.listas[0]).toMatchObject({ nome: 'Feira do sábado', itens: [{ quantidade: 2, valorUnitarioCentavos: 850, concluido: true }] })
+  })
+
+  it('exportar usa o compartilhamento do sistema quando ele aceita o arquivo', async () => {
+    await criarLista('Feira do sábado', new Date())
+    const compartilhar = vi.fn((dados: ShareData) => {
+      void dados
+      return Promise.resolve()
+    })
+    Object.defineProperty(navigator, 'share', { value: compartilhar, configurable: true })
+    Object.defineProperty(navigator, 'canShare', { value: () => true, configurable: true })
+    onTestFinished(() => {
+      Reflect.deleteProperty(navigator, 'share')
+      Reflect.deleteProperty(navigator, 'canShare')
+    })
+
+    renderizar()
+    await screen.findByText('Feira do sábado')
+    fireEvent.click(within(abrirOpcoes()).getByRole('button', { name: /Exportar backup/ }))
+
+    await waitFor(() => expect(compartilhar).toHaveBeenCalledTimes(1))
+    const [arquivo] = compartilhar.mock.calls[0][0].files!
+    expect(arquivo.name).toMatch(/^feira-organizada-backup-\d{4}-\d{2}-\d{2}\.json$/)
+    expect(JSON.parse(await arquivo.text()).listas).toHaveLength(1)
+  })
+
+  it('"Importar backup" abre o seletor de arquivos', async () => {
+    renderizar()
+    await screen.findByText('Você ainda não tem listas')
+    const abrirSeletor = vi.spyOn(seletor(), 'click')
+    fireEvent.click(within(abrirOpcoes()).getByRole('button', { name: /Importar backup/ }))
+    expect(abrirSeletor).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('dialog', { name: 'Backup' })).not.toBeInTheDocument()
+  })
+
+  it('importar uma foto mostra arquivo inválido e não altera as listas', async () => {
+    await criarLista('Frutas', new Date())
+    renderizar()
+    await screen.findByText('Frutas')
+    escolherArquivo(new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70])], 'IMG_0001.jpg', { type: 'image/jpeg' }))
+
+    await waitFor(() => expect(dialog()).toHaveTextContent(MENSAGEM_INVALIDO))
+    expect(dialog()).toHaveTextContent('Ops!')
+    fecharDialog()
+    expect(await nomesDasListas()).toEqual(['Frutas'])
+  })
+
+  it('importar backup com item de quantidade 0 mostra arquivo inválido', async () => {
+    await criarLista('Frutas', new Date())
+    const dados = tresListas()
+    dados.listas[0].itens[1] = { ...(dados.listas[0].itens[1] as object), quantidade: 0 }
+    renderizar()
+    await screen.findByText('Frutas')
+    escolherArquivo(arquivoJson(dados))
+
+    await waitFor(() => expect(dialog()).toHaveTextContent(MENSAGEM_INVALIDO))
+    expect(await nomesDasListas()).toEqual(['Frutas'])
+  })
+
+  it('importar com confirmação troca as listas pelas do backup', async () => {
+    await criarLista('Antiga 1', new Date(2026, 10, 1, 9))
+    await criarLista('Antiga 2', new Date(2026, 10, 2, 9))
+    renderizar()
+    await screen.findByText('Antiga 1')
+    escolherArquivo(arquivoJson(tresListas()))
+
+    await waitFor(() => expect(dialog()).toHaveTextContent('Importar backup?'))
+    expect(dialog()).toHaveTextContent(
+      'Suas 2 listas atuais serão substituídas pelas 3 listas do backup. Essa ação não pode ser desfeita.',
+    )
+    fecharDialog('Importar')
+
+    await screen.findByText('Churrasco')
+    expect(screen.queryByText('Antiga 1')).not.toBeInTheDocument()
+    expect(screen.getByText('3 listas')).toBeInTheDocument()
+    const nomes = screen.getAllByRole('listitem').map((li) => li.querySelector('.card-nome')?.textContent)
+    expect(nomes).toEqual(['Frutas', 'Churrasco', 'Feira do sábado'])
+    expect(card('Feira do sábado')).toHaveTextContent('1 de 2 itens')
+    expect(card('Feira do sábado')).toHaveTextContent('R$ 17,00')
+    expect(card('Frutas')).toHaveTextContent('R$ 7,50')
+  })
+
+  it('importar no aparelho sem listas', async () => {
+    renderizar()
+    await screen.findByText('Você ainda não tem listas')
+    escolherArquivo(arquivoJson(tresListas()))
+    await waitFor(() => expect(dialog()).toHaveTextContent('As 3 listas do backup serão importadas.'))
+    fecharDialog('Importar')
+    expect(await screen.findByText('Churrasco')).toBeInTheDocument()
+  })
+
+  it('cancelar a importação não altera nenhuma lista', async () => {
+    await criarLista('Antiga', new Date())
+    renderizar()
+    await screen.findByText('Antiga')
+    escolherArquivo(arquivoJson(tresListas()))
+    await waitFor(() => expect(dialog()).toHaveTextContent('Sua 1 lista atual será substituída pelas 3 listas do backup.'))
+    fecharDialog('Cancelar')
+
+    expect(screen.getByText('Antiga')).toBeInTheDocument()
+    expect(await nomesDasListas()).toEqual(['Antiga'])
+  })
+
+  it('falha do banco na importação mantém as listas anteriores', async () => {
+    await criarLista('Antiga', new Date())
+    renderizar()
+    await screen.findByText('Antiga')
+    escolherArquivo(arquivoJson(tresListas()))
+    await waitFor(() => expect(dialog()).toHaveTextContent('Importar backup?'))
+    vi.spyOn(repositorios.backup, 'importar').mockRejectedValue(new ErroArmazenamento('importar'))
+    fecharDialog('Importar')
+
+    await waitFor(() => expect(dialog()).toHaveTextContent('Não foi possível importar o backup. Tente novamente.'))
+    expect(dialog()).toHaveTextContent('Ops!')
+    fecharDialog()
+    expect(screen.getByText('Antiga')).toBeInTheDocument()
+    expect(await nomesDasListas()).toEqual(['Antiga'])
+  })
+})

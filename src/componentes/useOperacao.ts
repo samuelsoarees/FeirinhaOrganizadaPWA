@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ErroNaoEncontrado, ErroValidacao } from '../dominio/erros'
+import { ErroBackupInvalido, ErroNaoEncontrado, ErroValidacao } from '../dominio/erros'
 import { Mensagens } from '../dominio/mensagens'
 import { usePilhaCamadas } from '../navegacao/camadas'
 import type { OpcoesDialog } from './Dialog'
@@ -26,6 +26,9 @@ export function dialogDoErro(erro: unknown, mensagemFalha: string): OpcoesDialog
   if (erro instanceof ErroValidacao || erro instanceof ErroNaoEncontrado) {
     return { icone: 'alerta', titulo: Mensagens.geral.atencao, mensagem: erro.message }
   }
+  if (erro instanceof ErroBackupInvalido) {
+    return { icone: 'erro', titulo: Mensagens.geral.ops, mensagem: erro.message }
+  }
   return { icone: 'erro', titulo: Mensagens.geral.ops, mensagem: mensagemFalha }
 }
 
@@ -33,7 +36,7 @@ export function dialogDoErro(erro: unknown, mensagemFalha: string): OpcoesDialog
 // - bloqueia toques e o voltar desde o início (`ocupado`);
 // - mostra o indicador só depois de 300 ms (`mostrarIndicador`);
 // - uma operação por vez: chamadas durante outra são ignoradas;
-// - erro → dialog "Atenção" (regra) ou "Ops!" (falha técnica).
+// - erro → dialog "Atenção" (regra) ou "Ops!" (falha técnica ou arquivo de backup inválido).
 export function useOperacao(): {
   executar: ExecutarOperacao
   ocupado: boolean

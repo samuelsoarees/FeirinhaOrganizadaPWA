@@ -98,6 +98,28 @@ export const Mensagens = {
     falhaMarcar: 'Não foi possível marcar o item. Tente novamente.',
     marcarComoConcluido: (descricao: string) => `Marcar ${descricao} como concluído`,
   },
+  backup: {
+    opcoes: 'Opções',
+    titulo: 'Backup',
+    exportar: 'Exportar backup',
+    importar: 'Importar backup',
+    semListas: 'Você ainda não tem listas para exportar.',
+    tituloArquivo: 'Backup do Feira Organizada',
+    nomeArquivo: (dataAaaaMmDd: string) => `feira-organizada-backup-${dataAaaaMmDd}.json`,
+    importarTitulo: 'Importar backup?',
+    importarConfirmar: 'Importar',
+    importarMensagem: (atuais: number, doBackup: number) => {
+      const listasDoBackup = doBackup === 1 ? 'pela 1 lista do backup' : `pelas ${doBackup} listas do backup`
+      if (atuais === 0) {
+        return doBackup === 1 ? 'A 1 lista do backup será importada.' : `As ${doBackup} listas do backup serão importadas.`
+      }
+      const listasAtuais = atuais === 1 ? 'Sua 1 lista atual será substituída' : `Suas ${atuais} listas atuais serão substituídas`
+      return `${listasAtuais} ${listasDoBackup}. Essa ação não pode ser desfeita.`
+    },
+    arquivoInvalido: 'Este arquivo não é um backup válido do Feira Organizada.',
+    falhaExportar: 'Não foi possível exportar o backup. Tente novamente.',
+    falhaImportar: 'Não foi possível importar o backup. Tente novamente.',
+  },
   instalacao: {
     instalarApp: 'Instalar app',
     iosTitulo: 'Instale o app no iPhone',
