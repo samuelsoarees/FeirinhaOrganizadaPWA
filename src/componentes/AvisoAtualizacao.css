@@ -1,6 +1,6 @@
 .aviso-atualizacao {
   position: fixed;
-  z-index: 30;
+  z-index: 15;
   left: 50%;
   top: calc(10px + var(--seguro-topo));
   transform: translateX(-50%);

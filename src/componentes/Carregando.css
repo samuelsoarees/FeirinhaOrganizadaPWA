@@ -1,0 +1,29 @@
+/* Acima de tudo, inclusive do dialog: durante a operação nenhum toque passa. */
+.carregando {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: transparent;
+}
+
+.carregando--visivel {
+  background: #181f3dcc;
+  animation: aparecer 0.15s ease-out;
+}
+
+.carregando-spinner {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 5px solid #ffffff22;
+  border-top-color: var(--primaria);
+  animation: carregando-girar 0.8s linear infinite;
+}
+
+@keyframes carregando-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}

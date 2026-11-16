@@ -1,8 +1,9 @@
 .tela-listas {
+  position: relative;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  padding-bottom: var(--seguro-baixo);
 }
 
 .topo {
@@ -44,6 +45,159 @@
   cursor: pointer;
 }
 
+.espaco {
+  flex: 1;
+}
+
+/* Área dos cards: rola sozinha; o espaço no fim deixa o último card acima do "+". */
+.conteudo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding: 0 14px calc(90px + var(--seguro-baixo));
+}
+
+.conteudo::-webkit-scrollbar {
+  display: none;
+}
+
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Card (TFrameCardLista) */
+.card {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  height: 70px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-campo);
+  transition: background 0.15s;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--faixa);
+}
+
+.card--pressionado {
+  background: var(--superficie-pressionada);
+}
+
+.card-toque {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 18px;
+  cursor: pointer;
+  outline: 0;
+  touch-action: pan-y;
+  -webkit-touch-callout: none;
+}
+
+.card-toque:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--borda-foco);
+  border-radius: var(--raio-campo) 0 0 var(--raio-campo);
+}
+
+.card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-nome {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-meta {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--texto-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-valor {
+  flex: none;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-valor small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--texto-2);
+}
+
+.card-mais {
+  flex: none;
+  width: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0 var(--raio-campo) var(--raio-campo) 0;
+  color: var(--texto-2);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.card-mais:active {
+  color: var(--texto);
+}
+
+.fab {
+  position: absolute;
+  right: 18px;
+  bottom: calc(22px + var(--seguro-baixo));
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--primaria);
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+  box-shadow: 0 6px 16px #df255c66;
+  cursor: pointer;
+}
+
+.fab:active {
+  filter: brightness(0.92);
+}
+
+/* Estados vazio e erro */
 .estado {
   flex: 1;
   display: flex;
@@ -74,6 +228,18 @@
   color: var(--texto-2);
 }
 
+.estado-icone-erro {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 3px solid var(--vermelho);
+  color: var(--vermelho);
+  font-size: 34px;
+  font-weight: 800;
+}
+
 .estado-acao {
   width: 100%;
   margin-top: 12px;
@@ -81,9 +247,13 @@
 
 .rodape-versao {
   flex: none;
-  padding: 6px 0 10px;
+  padding: 6px 0 calc(10px + var(--seguro-baixo));
   text-align: center;
   font-size: 10px;
   color: var(--texto-2);
   opacity: 0.7;
+}
+
+.conteudo .rodape-versao {
+  padding: 14px 0 0;
 }

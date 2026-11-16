@@ -1,0 +1,67 @@
+/* Action sheet do card (docs/mock-tela-listas.html). Abaixo do modal (30/31). */
+.menu-overlay {
+  z-index: 20;
+}
+
+.menu-inferior {
+  position: fixed;
+  z-index: 21;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 10px 18px calc(16px + var(--seguro-baixo));
+  background: var(--fundo);
+  border-top: 1px solid var(--borda);
+  border-radius: 22px 22px 0 0;
+  animation: menu-subir 0.2s ease-out;
+}
+
+@keyframes menu-subir {
+  from {
+    transform: translateY(105%);
+  }
+}
+
+.menu-alca {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 12px;
+  border-radius: 2px;
+  background: #ffffff33;
+}
+
+.menu-titulo {
+  margin: 0 0 6px 2px;
+  font-size: 12px;
+  color: var(--texto-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-opcao {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 48px;
+  padding: 0 4px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid #28699355;
+  color: var(--texto);
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-opcao span {
+  width: 22px;
+  text-align: center;
+}
+
+.menu-opcao--perigo {
+  color: var(--vermelho);
+}

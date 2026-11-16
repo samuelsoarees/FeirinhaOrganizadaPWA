@@ -1,6 +1,11 @@
 // Pilha das camadas abertas (dialog, modal, menu, painel) ligada ao history do navegador.
 // Cada camada aberta empilha uma entrada no history; o voltar do Android (popstate) fecha só a do topo.
-// Fechar pela própria camada chama history.back(), e o popstate resultante é ignorado.
+// Fechar pela própria camada volta o history, e o popstate resultante é ignorado.
+//
+// O history.back() é assíncrono. Se uma camada fecha e outra abre no mesmo toque (menu → modal,
+// menu → dialog), um back seguido de pushState disputaria a mesma entrada. Por isso o back fica
+// para o fim da tarefa atual (microtask), e uma camada aberta antes disso reaproveita a entrada
+// com replaceState.
 
 type Camada = { id: number; aoVoltar: () => void }
 
@@ -8,6 +13,8 @@ export class PilhaCamadas {
   private camadas: Camada[] = []
   private proximoId = 1
   private popstatesIgnorados = 0
+  private backsPendentes = 0
+  private backAgendado = false
   private bloqueada = false
   private readonly janela: Window
 
@@ -27,7 +34,12 @@ export class PilhaCamadas {
   abrir(aoVoltar: () => void): number {
     const id = this.proximoId++
     this.camadas.push({ id, aoVoltar })
-    this.janela.history.pushState({ camada: id }, '')
+    if (this.backsPendentes > 0) {
+      this.backsPendentes--
+      this.janela.history.replaceState({ camada: id }, '')
+    } else {
+      this.janela.history.pushState({ camada: id }, '')
+    }
     return id
   }
 
@@ -37,13 +49,28 @@ export class PilhaCamadas {
     const indice = this.camadas.findIndex((c) => c.id === id)
     if (indice < 0) return
     this.camadas.splice(indice, 1)
-    this.popstatesIgnorados++
-    this.janela.history.back()
+    this.backsPendentes++
+    this.agendarBack()
   }
 
   // Enquanto bloqueada (operação em andamento), o voltar é desfeito.
   definirBloqueio(bloqueada: boolean): void {
     this.bloqueada = bloqueada
+  }
+
+  private agendarBack(): void {
+    if (this.backAgendado) return
+    this.backAgendado = true
+    queueMicrotask(() => {
+      this.backAgendado = false
+      const quantas = this.backsPendentes
+      this.backsPendentes = 0
+      if (quantas === 0) return
+      // history.go(-n) gera um popstate só.
+      this.popstatesIgnorados++
+      if (quantas === 1) this.janela.history.back()
+      else this.janela.history.go(-quantas)
+    })
   }
 
   private aoPopstate = (): void => {

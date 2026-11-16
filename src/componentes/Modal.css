@@ -1,0 +1,73 @@
+/* Modal Nova / Renomear (docs/mock-tela-listas.html). Abaixo do dialog (40/41). */
+.modal-overlay {
+  z-index: 30;
+}
+
+.modal {
+  position: fixed;
+  z-index: 31;
+  left: 0;
+  right: 0;
+  top: calc(var(--seguro-topo) + 124px);
+  width: min(100% - 36px, 564px);
+  margin: 0 auto;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-card);
+  padding: 18px;
+  animation: modal-entrar 0.15s ease-out;
+}
+
+@keyframes modal-entrar {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.modal-titulo {
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.rotulo {
+  display: block;
+  margin: 0 0 6px 2px;
+  font-size: 11px;
+  color: var(--texto-2);
+}
+
+.campo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+  margin-bottom: 14px;
+  padding: 0 12px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-campo);
+}
+
+.campo:focus-within {
+  border-color: var(--borda-foco);
+}
+
+.campo-icone {
+  width: 20px;
+  text-align: center;
+  color: var(--texto-2);
+}
+
+.campo input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  color: var(--texto);
+  font: inherit;
+  /* 16px evita o zoom automático do Safari ao focar o campo. */
+  font-size: 16px;
+}

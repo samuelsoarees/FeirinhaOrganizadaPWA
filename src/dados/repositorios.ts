@@ -1,0 +1,24 @@
+import { BancoFeira } from './banco'
+import { RepositorioListas } from './repositorioListas'
+
+export type Repositorios = {
+  listas: RepositorioListas
+}
+
+export function criarRepositorios(banco: BancoFeira): Repositorios {
+  return { listas: new RepositorioListas(banco) }
+}
+
+let banco: BancoFeira | null = null
+let repositorios: Repositorios | null = null
+
+// Banco real do app, aberto na primeira vez que alguém precisa dele.
+export function bancoPadrao(): BancoFeira {
+  banco ??= new BancoFeira()
+  return banco
+}
+
+export function repositoriosPadrao(): Repositorios {
+  repositorios ??= criarRepositorios(bancoPadrao())
+  return repositorios
+}

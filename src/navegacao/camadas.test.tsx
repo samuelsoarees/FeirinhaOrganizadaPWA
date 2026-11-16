@@ -62,7 +62,7 @@ describe('pilha de camadas ligada ao history', () => {
     expect(pushState).toHaveBeenCalledTimes(2)
   })
 
-  it('fechar pelo botão volta o history e o popstate resultante não fecha outra camada', () => {
+  it('fechar pelo botão volta o history e o popstate resultante não fecha outra camada', async () => {
     const back = vi.spyOn(window.history, 'back').mockImplementation(() => {})
     render(
       <ProvedorCamadas>
@@ -70,7 +70,9 @@ describe('pilha de camadas ligada ao history', () => {
       </ProvedorCamadas>,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'OK' }))
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'OK' }))
+    })
     expect(screen.queryByText('Camada do topo')).not.toBeInTheDocument()
     expect(back).toHaveBeenCalledTimes(1)
 
@@ -96,6 +98,47 @@ describe('pilha de camadas ligada ao history', () => {
     )
     voltarDoAndroid()
     expect(aoFechar).toHaveBeenCalledWith(false)
+  })
+})
+
+describe('PilhaCamadas trocando de camada no mesmo toque', () => {
+  it('fechar o menu e abrir o modal reaproveita a entrada do history', async () => {
+    const pilha = new PilhaCamadas(window)
+    const desinstalar = pilha.instalar()
+    const menu = pilha.abrir(vi.fn())
+    const pushState = vi.spyOn(window.history, 'pushState')
+    const replaceState = vi.spyOn(window.history, 'replaceState')
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => {})
+
+    pilha.fechar(menu)
+    const aoVoltarModal = vi.fn()
+    pilha.abrir(aoVoltarModal)
+    await Promise.resolve()
+
+    expect(back).not.toHaveBeenCalled()
+    expect(pushState).not.toHaveBeenCalled()
+    expect(replaceState).toHaveBeenCalledTimes(1)
+
+    // O voltar do Android fecha o modal, que agora é o topo.
+    window.dispatchEvent(new PopStateEvent('popstate'))
+    expect(aoVoltarModal).toHaveBeenCalledTimes(1)
+    expect(pilha.quantidade).toBe(0)
+    desinstalar()
+  })
+
+  it('fechar duas camadas no mesmo toque volta as duas entradas de uma vez', async () => {
+    const pilha = new PilhaCamadas(window)
+    const desinstalar = pilha.instalar()
+    const a = pilha.abrir(vi.fn())
+    const b = pilha.abrir(vi.fn())
+    const go = vi.spyOn(window.history, 'go').mockImplementation(() => {})
+
+    pilha.fechar(b)
+    pilha.fechar(a)
+    await Promise.resolve()
+
+    expect(go).toHaveBeenCalledWith(-2)
+    desinstalar()
   })
 })
 
