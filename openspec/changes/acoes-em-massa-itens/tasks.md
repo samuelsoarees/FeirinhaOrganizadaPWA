@@ -27,7 +27,7 @@ Cada tarefa segue o ciclo de TDD: escrever o teste com os valores da spec, ver o
   - o toque em "⋯" abre o menu com as opções na ordem;
   - o toque fora fecha o menu sem gravar;
   - o `popstate` com o menu aberto fecha só o menu.
-- [ ] 2.2 Fluxo de "Desmarcar todos" (decisão 4 do design). Verificar: testes de tela, um por cenário:
+- [x] 2.2 Fluxo de "Desmarcar todos" (decisão 4 do design). Verificar: testes de tela, um por cenário:
   - confirmar: 6 pendentes na ordem de inclusão, sem o rótulo "Concluídos", "R$ 0,00" e "0 de 6 itens concluídos · previsto R$ 51,40";
   - a mensagem no singular;
   - cancelar não grava;

@@ -187,6 +187,51 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
     setMenuOpcoes(true)
   }
 
+  // Fluxo comum de "Desmarcar todos" e "Zerar preços": sem nada para fazer, só avisa;
+  // senão confirma, grava tudo de uma vez e recarrega (ordem e totais vêm do banco).
+  const alterarEmLote = async (acao: {
+    quantidade: number
+    nadaParaFazer: string
+    titulo: string
+    mensagem: string
+    textoConfirmar: string
+    mensagemFalha: string
+    gravar: () => Promise<number>
+  }) => {
+    setMenuOpcoes(false)
+    if (acao.quantidade === 0) {
+      void mostrarDialog({ icone: 'alerta', titulo: Mensagens.geral.atencao, mensagem: acao.nadaParaFazer })
+      return
+    }
+    const confirmado = await mostrarDialog({
+      icone: 'alerta',
+      titulo: acao.titulo,
+      mensagem: acao.mensagem,
+      textoConfirmar: acao.textoConfirmar,
+      textoCancelar: Mensagens.geral.cancelar,
+    })
+    if (!confirmado) return
+    const resultado = await executar(acao.gravar, { mensagemFalha: acao.mensagemFalha })
+    if (resultado.status === 'ok') {
+      await carregar()
+    } else if (resultado.status === 'erro' && resultado.erro instanceof ErroNaoEncontrado) {
+      await tratarNaoEncontrado(resultado.erro, resultado.dialogFechado)
+    }
+  }
+
+  const desmarcarTodos = () => {
+    const quantidade = resumirItens(itens).quantidadeConcluidos
+    return alterarEmLote({
+      quantidade,
+      nadaParaFazer: Mensagens.detalhe.nadaParaDesmarcar,
+      titulo: Mensagens.detalhe.desmarcarTitulo,
+      mensagem: Mensagens.detalhe.desmarcarMensagem(quantidade),
+      textoConfirmar: Mensagens.detalhe.desmarcar,
+      mensagemFalha: Mensagens.detalhe.falhaDesmarcar,
+      gravar: () => repositorios.itens.desmarcarTodos(idLista),
+    })
+  }
+
   const abrirRenomear = () => {
     flushSync(() => setRenomeando(true))
   }
@@ -320,7 +365,7 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
         titulo={Mensagens.detalhe.opcoesDaLista}
         aoFechar={() => setMenuOpcoes(false)}
         opcoes={[
-          { rotulo: Mensagens.detalhe.desmarcarTodos, icone: '○', aoEscolher: () => setMenuOpcoes(false) },
+          { rotulo: Mensagens.detalhe.desmarcarTodos, icone: '○', aoEscolher: () => void desmarcarTodos() },
           { rotulo: Mensagens.detalhe.zerarPrecos, icone: '⊘', perigo: true, aoEscolher: () => setMenuOpcoes(false) },
         ]}
       />

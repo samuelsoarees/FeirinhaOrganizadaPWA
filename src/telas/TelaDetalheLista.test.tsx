@@ -716,3 +716,76 @@ describe('opções da lista', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Feira do sábado' })).toBeInTheDocument()
   })
 })
+
+async function quantosConcluidosNoBanco(): Promise<number> {
+  return banco.itens.filter((registro) => registro.concluido === 1).count()
+}
+
+describe('desmarcar todos pela tela', () => {
+  it('confirmar volta todos para os pendentes na ordem de inclusão e atualiza o rodapé', async () => {
+    await renderizarPronta()
+    escolherOpcao('Desmarcar todos')
+    expect(screen.queryByRole('dialog', { name: 'Opções da lista' })).not.toBeInTheDocument()
+    expect(dialog()).toHaveTextContent('Desmarcar todos os itens?')
+    expect(dialog()).toHaveTextContent('Os 4 itens concluídos voltarão para os pendentes.')
+
+    fecharDialog('Desmarcar')
+
+    await waitFor(() => expect(screen.queryByText(/^Concluídos/)).not.toBeInTheDocument())
+    expect(ordemNaTela()).toEqual(['Tomate', 'Abacaxi pérola', 'Alface americana', 'Ovos caipira', 'Pimentão', 'Manga palmer'])
+    expect(rodape()).toHaveTextContent('R$ 0,00')
+    expect(rodape()).toHaveTextContent('0 de 6 itens concluídos · previsto R$ 51,40')
+    expect(await quantosConcluidosNoBanco()).toBe(0)
+  })
+
+  it('com um item concluído, a mensagem fica no singular', async () => {
+    await renderizarPronta([{ descricao: 'Tomate', quantidade: 6, valorUnitarioCentavos: 120, concluido: true }])
+    escolherOpcao('Desmarcar todos')
+    expect(dialog()).toHaveTextContent('O 1 item concluído voltará para os pendentes.')
+  })
+
+  it('"Cancelar" fecha o dialog e os concluídos continuam', async () => {
+    await renderizarPronta()
+    escolherOpcao('Desmarcar todos')
+    fecharDialog('Cancelar')
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
+    expect(screen.getByText('Concluídos (4)')).toBeInTheDocument()
+    expect(await quantosConcluidosNoBanco()).toBe(4)
+  })
+
+  it('sem concluídos, avisa "Nenhum item concluído para desmarcar." e não grava', async () => {
+    await renderizarPronta(feiraDoSabado.map((item) => ({ ...item, concluido: false })))
+    const desmarcarTodos = vi.spyOn(repositorios.itens, 'desmarcarTodos')
+    escolherOpcao('Desmarcar todos')
+    expect(dialog()).toHaveTextContent('Atenção')
+    expect(dialog()).toHaveTextContent('Nenhum item concluído para desmarcar.')
+    expect(within(dialog()).getAllByRole('button').map((botao) => botao.textContent)).toEqual(['OK'])
+    fecharDialog()
+    expect(desmarcarTodos).not.toHaveBeenCalled()
+  })
+
+  it('falha mostra "Ops!" e os itens continuam concluídos', async () => {
+    await renderizarPronta()
+    vi.spyOn(repositorios.itens, 'desmarcarTodos').mockRejectedValue(
+      new ErroArmazenamento('desmarcar', new Error('disk I/O error')),
+    )
+    escolherOpcao('Desmarcar todos')
+    fecharDialog('Desmarcar')
+    await waitFor(() => expect(dialog()).toHaveTextContent('Ops!'))
+    expect(dialog()).toHaveTextContent('Não foi possível desmarcar os itens. Tente novamente.')
+    expect(dialog()).not.toHaveTextContent('disk')
+    fecharDialog()
+    expect(screen.getByText('Concluídos (4)')).toBeInTheDocument()
+  })
+
+  it('lista que não existe mais avisa e volta para Listas', async () => {
+    window.location.hash = `#/lista/${idLista}`
+    await renderizarPronta()
+    await repositorios.listas.excluir(idLista)
+    escolherOpcao('Desmarcar todos')
+    fecharDialog('Desmarcar')
+    await waitFor(() => expect(dialog()).toHaveTextContent('Esta lista não existe mais. Atualizamos a tela para você.'))
+    fecharDialog()
+    await waitFor(() => expect(window.location.hash).toBe('#/'))
+  })
+})
