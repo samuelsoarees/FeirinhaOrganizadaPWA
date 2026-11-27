@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ações da lista - mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Mesmos tokens de docs/mock-telas.html e src/estilo/tokens.css */
+  :root {
+    --fundo: #181F3D;
+    --superficie: #232C51;
+    --borda: #286993;
+    --primaria: #DF255C;
+    --texto: #FFFFFF;
+    --texto-2: #A9B1D6;
+    --dlg-titulo: #2C2C2C;
+    --dlg-msg: #848484;
+    --verde: #2E9E22;
+    --vermelho: #E64D4D;
+    --laranja: #F3A867;
+    --pagina: #0E1330;
+    --fonte: "Nunito", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--pagina); color: var(--texto); font-family: var(--fonte); padding: 32px 16px 64px; }
+  header.doc, section.bloco, .nota { max-width: 1200px; margin: 0 auto; }
+  header.doc { margin-bottom: 28px; }
+  header.doc h1 { margin: 0 0 6px; font-size: 24px; }
+  header.doc p, .bloco > p { margin: 0; color: var(--texto-2); font-size: 14px; line-height: 1.55; }
+  .bloco { border-top: 1px solid #ffffff1a; padding-top: 28px; margin-bottom: 40px; }
+  .bloco h2 { font-size: 18px; margin: 0 0 6px; }
+  .bloco > p { margin-bottom: 20px; }
+  code { color: var(--texto); }
+
+  .telas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(310px, 100%), 1fr)); gap: 36px 28px; justify-items: center; }
+  figure { margin: 0; width: 100%; max-width: 330px; }
+  figcaption { margin-top: 12px; font-size: 13px; color: var(--texto-2); line-height: 1.5; }
+  figcaption b { color: var(--texto); display: block; font-size: 14px; margin-bottom: 2px; }
+
+  .interativo { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+  .interativo figure { flex: none; }
+  .roteiro { flex: 1; min-width: min(280px, 100%); font-size: 14px; line-height: 1.6; color: var(--texto-2); }
+  .roteiro ol { padding-left: 20px; margin: 0 0 14px; }
+  .roteiro b { color: var(--texto); }
+  .reset { font: inherit; font-size: 13px; color: var(--texto); background: var(--superficie); border: 1px solid var(--borda); border-radius: 20px; padding: 6px 14px; cursor: pointer; }
+
+  /* Aparelho */
+  .phone { width: 100%; height: 640px; border-radius: 34px; background: #05070F; padding: 10px; box-shadow: 0 20px 50px #00000080; }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 26px; overflow: hidden; background: var(--fundo); display: flex; flex-direction: column; }
+  .status { height: 26px; flex: none; display: flex; justify-content: space-between; align-items: center; padding: 0 18px; font-size: 11px; color: var(--texto-2); }
+
+  /* Cabeçalho do detalhe: ‹  nome  ✎  ⋯ */
+  .topo-det { display: flex; align-items: center; gap: 4px; padding: 4px 6px 8px; flex: none; }
+  .topo-det button { flex: none; width: 40px; height: 40px; border: 0; border-radius: 50%; background: none; display: grid; place-items: center; padding: 0; font-family: inherit; cursor: pointer; }
+  .topo-det .voltar { font-size: 28px; line-height: 1; color: var(--texto); }
+  .topo-det h2 { margin: 0; font-size: 18px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topo-det .acao { color: var(--texto-2); font-size: 17px; }
+  .topo-det .acao.mais { font-size: 22px; letter-spacing: 1px; }
+  .topo-det .acao.destaque { background: var(--superficie); box-shadow: 0 0 0 2px var(--primaria); color: var(--texto); }
+
+  .conteudo { flex: 1; overflow: hidden; padding: 0 14px; display: flex; flex-direction: column; }
+
+  /* Item */
+  .item { display: flex; align-items: center; gap: 10px; padding: 11px 4px; border-bottom: 1px solid #28699355; transition: background .3s; }
+  .item .check { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--borda); display: grid; place-items: center; font-size: 14px; font-weight: bold; color: transparent; background: none; padding: 0; cursor: pointer; font-family: inherit; }
+  .item.ok .check { background: var(--verde); border-color: var(--verde); color: #FFFFFF; }
+  .item .info { flex: 1; min-width: 0; }
+  .item .desc { font-size: 14px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .det { font-size: 11px; line-height: 15px; color: var(--texto-2); margin-top: 3px; }
+  .item .sub { font-size: 14px; font-weight: bold; }
+  .item:not(.ok) .sub { color: var(--texto-2); font-weight: normal; }
+  .item.mudou { background: #DF255C1f; }
+  .grupo { font-size: 11px; color: var(--texto-2); letter-spacing: .5px; text-transform: uppercase; padding: 14px 4px 4px; border-bottom: 1px solid #28699355; }
+  .sub, .det, .total strong, .resumo { font-variant-numeric: tabular-nums; }
+
+  /* Rodapé */
+  .rodape { flex: none; background: var(--superficie); border-top: 1px solid var(--borda); border-radius: 18px 18px 0 0; padding: 14px 16px 16px; }
+  .total { display: flex; align-items: baseline; justify-content: space-between; }
+  .total span { font-size: 13px; color: var(--texto-2); }
+  .total strong { font-size: 24px; font-weight: 800; }
+  .progresso { height: 4px; border-radius: 2px; background: #ffffff1f; margin: 8px 0 6px; overflow: hidden; }
+  .progresso i { display: block; height: 100%; background: var(--verde); border-radius: 2px; transition: width .3s; }
+  .resumo { font-size: 11px; color: var(--texto-2); margin: 0 0 12px; }
+  .btn { background: var(--primaria); border-radius: 20px; height: 48px; display: grid; place-items: center; font-weight: bold; font-size: 14px; width: 100%; }
+
+  /* Overlay e menu (MenuInferior) */
+  .overlay { position: absolute; inset: 0; background: #000000A6; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--fundo); border-top: 1px solid var(--borda); border-radius: 22px 22px 0 0; padding: 10px 18px 16px; }
+  .sheet .alca { width: 40px; height: 4px; border-radius: 2px; background: #ffffff33; margin: 0 auto 12px; }
+  .sheet .titulo { font-size: 12px; color: var(--texto-2); margin: 0 0 6px 2px; }
+  .sheet .opcao { display: flex; align-items: center; gap: 12px; width: 100%; height: 48px; padding: 0 4px; background: none; border: 0; border-bottom: 1px solid #28699355; color: var(--texto); font-family: inherit; font-size: 15px; text-align: left; cursor: pointer; }
+  .sheet .opcao span { width: 22px; text-align: center; font-size: 17px; }
+  .sheet .opcao.perigo { color: var(--vermelho); }
+  .sheet .cancelar { display: block; width: 100%; background: none; border: 0; font-family: inherit; text-align: center; font-size: 13px; color: var(--texto-2); padding: 12px 0 0; cursor: pointer; }
+
+  /* Dialog (FancyDialog) */
+  .dialog { position: absolute; left: 22px; right: 22px; top: 150px; background: #FFFFFF; border-radius: 14px; padding: 22px 20px 18px; text-align: center; }
+  .dialog .icone { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--laranja); color: var(--laranja); display: grid; place-items: center; font-size: 34px; font-weight: bold; margin: 0 auto 12px; }
+  .dialog h4 { margin: 0 0 8px; font-size: 19px; color: var(--dlg-titulo); }
+  .dialog p { margin: 0 0 18px; font-size: 14px; color: var(--dlg-msg); line-height: 1.45; }
+  .dialog .botoes { display: flex; gap: 10px; }
+  .dialog .botoes button { flex: 1; height: 44px; border: 0; border-radius: 20px; font-family: inherit; font-weight: bold; font-size: 14px; cursor: pointer; }
+  .dialog .sim { background: var(--primaria); color: #fff; }
+  .dialog .nao { background: #EEEEEE; color: var(--dlg-titulo); }
+
+  .nota { font-size: 13px; color: var(--texto-2); line-height: 1.6; border-top: 1px solid #ffffff1a; padding-top: 18px; }
+  .nota ul { padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<header class="doc">
+  <h1>Feira Organizada: ações da lista</h1>
+  <p>Mock da change <code>openspec/changes/acoes-em-massa-itens</code>. O botão <b>⋯</b> no cabeçalho do detalhe abre o menu <b>Opções da lista</b> com <b>Desmarcar todos</b> e <b>Zerar preços</b>. As duas ações pedem confirmação e gravam tudo de uma vez. O visual reaproveita o menu inferior e o dialog que o app já tem.</p>
+</header>
+
+<section class="bloco">
+  <h2>Experimente</h2>
+  <p>O aparelho abaixo funciona com dados em memória. O resultado das ações fica destacado por alguns segundos.</p>
+  <div class="interativo">
+    <figure><div class="phone"><div class="screen" id="vivo"></div></div></figure>
+    <div class="roteiro">
+      <ol>
+        <li>Toque em <b>⋯</b> no canto superior direito.</li>
+        <li>Escolha <b>Desmarcar todos</b> e confirme: os 4 concluídos voltam para os pendentes, na ordem de inclusão.</li>
+        <li>Marque alguns itens tocando no círculo.</li>
+        <li>Toque em <b>⋯</b> e depois em <b>Zerar preços</b>: os valores vão a R$ 0,00 e as marcações continuam.</li>
+        <li>Repita <b>Zerar preços</b> para ver o aviso <b>Atenção</b> de quando não há nada para fazer.</li>
+      </ol>
+      <button type="button" class="reset" id="reset">Restaurar exemplo</button>
+    </div>
+  </div>
+</section>
+
+<section class="bloco">
+  <h2>Telas, passo a passo</h2>
+  <p>Os mesmos dados do mock original: 6 itens, 4 concluídos, total concluído R$ 37,40 e previsto R$ 51,40.</p>
+  <div class="telas" id="estaticas"></div>
+</section>
+
+<div class="nota">
+  <p><b>Textos exatos</b>, que vão para <code>src/dominio/mensagens.ts</code>:</p>
+  <ul>
+    <li>Menu: "Opções da lista", com "○ Desmarcar todos", "⊘ Zerar preços" (em vermelho) e "Cancelar".</li>
+    <li>"Desmarcar todos os itens?": "Os N itens concluídos voltarão para os pendentes." ou "O 1 item concluído voltará para os pendentes.", com os botões "Desmarcar" e "Cancelar".</li>
+    <li>"Zerar preços?": "Os N itens com preço ficarão com valor unitário R$ 0,00. Essa ação não pode ser desfeita." ou "O 1 item com preço ficará com valor unitário R$ 0,00. Essa ação não pode ser desfeita.", com os botões "Zerar" e "Cancelar".</li>
+    <li>Sem nada para fazer: "Atenção", com "Nenhum item concluído para desmarcar." ou "Nenhum item com preço para zerar.".</li>
+    <li>Falhas: "Não foi possível desmarcar os itens. Tente novamente." e "Não foi possível zerar os preços. Tente novamente.".</li>
+  </ul>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var EXEMPLO = [
+    { id: 1, desc: 'Abacaxi pérola', qtd: 1, cent: 800, ok: false },
+    { id: 2, desc: 'Pimentão', qtd: 3, cent: 200, ok: false },
+    { id: 3, desc: 'Tomate', qtd: 6, cent: 120, ok: true },
+    { id: 4, desc: 'Alface americana', qtd: 2, cent: 350, ok: true },
+    { id: 5, desc: 'Ovos caipira', qtd: 12, cent: 110, ok: true },
+    { id: 6, desc: 'Manga palmer', qtd: 4, cent: 250, ok: true }
+  ];
+
+  function copia(itens) { return itens.map(function (i) { return Object.assign({}, i); }); }
+
+  function reais(cent) {
+    var neg = cent < 0; cent = Math.abs(cent);
+    var inteiro = String(Math.floor(cent / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    var dec = String(cent % 100).padStart(2, '0');
+    return (neg ? '-' : '') + 'R$ ' + inteiro + ',' + dec;
+  }
+
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  var Msg = {
+    desmarcarMsg: function (n) { return n === 1 ? 'O 1 item concluído voltará para os pendentes.' : 'Os ' + n + ' itens concluídos voltarão para os pendentes.'; },
+    zerarMsg: function (n) { return (n === 1 ? 'O 1 item com preço ficará' : 'Os ' + n + ' itens com preço ficarão') + ' com valor unitário R$ 0,00. Essa ação não pode ser desfeita.'; },
+    resumo: function (c, n, prev) {
+      if (n === 0) return 'nenhum item · previsto ' + prev;
+      if (n === 1) return c + ' de 1 item concluído · previsto ' + prev;
+      return c + ' de ' + n + ' itens concluídos · previsto ' + prev;
+    }
+  };
+
+  // Pendentes primeiro, concluídos no fim, cada grupo na ordem de inclusão (id).
+  function ordenar(itens) { return itens.slice().sort(function (a, b) { return (a.ok - b.ok) || (a.id - b.id); }); }
+
+  function linha(i, mudou) {
+    return '<div class="item' + (i.ok ? ' ok' : '') + (mudou && mudou.indexOf(i.id) >= 0 ? ' mudou' : '') + '">' +
+      '<button type="button" class="check" data-marcar="' + i.id + '" aria-label="Marcar ' + esc(i.desc) + '">✓</button>' +
+      '<div class="info"><div class="desc">' + esc(i.desc) + '</div><div class="det">' + i.qtd + ' UN × ' + reais(i.cent) + '</div></div>' +
+      '<div class="sub">' + reais(i.qtd * i.cent) + '</div></div>';
+  }
+
+  function dialog(d) {
+    return '<div class="overlay"></div><div class="dialog" role="alertdialog">' +
+      '<div class="icone">!</div><h4>' + esc(d.titulo) + '</h4><p>' + esc(d.msg) + '</p>' +
+      '<div class="botoes">' +
+      (d.nao ? '<button type="button" class="nao" data-acao="dlg-nao">' + esc(d.nao) + '</button>' : '') +
+      '<button type="button" class="sim" data-acao="dlg-sim">' + esc(d.sim) + '</button></div></div>';
+  }
+
+  function menu() {
+    return '<div class="overlay" data-acao="menu-fechar"></div><div class="sheet" role="dialog" aria-label="Opções da lista">' +
+      '<div class="alca"></div><div class="titulo">Opções da lista</div>' +
+      '<button type="button" class="opcao" data-acao="desmarcar"><span>○</span>Desmarcar todos</button>' +
+      '<button type="button" class="opcao perigo" data-acao="zerar"><span>⊘</span>Zerar preços</button>' +
+      '<button type="button" class="cancelar" data-acao="menu-fechar">Cancelar</button></div>';
+  }
+
+  // estado: { itens, camada: null | 'menu' | {dialog}, mudou: [ids], destaqueMais: bool }
+  function tela(estado) {
+    var itens = ordenar(estado.itens);
+    var pend = itens.filter(function (i) { return !i.ok; });
+    var conc = itens.filter(function (i) { return i.ok; });
+    var totalConc = conc.reduce(function (s, i) { return s + i.qtd * i.cent; }, 0);
+    var previsto = itens.reduce(function (s, i) { return s + i.qtd * i.cent; }, 0);
+    var pct = itens.length ? conc.length / itens.length * 100 : 0;
+    var html = '<div class="status"><span>9:41</span><span>▮▮▮ 85%</span></div>' +
+      '<div class="topo-det"><button type="button" class="voltar" aria-label="Voltar">‹</button><h2>Feira do sábado</h2>' +
+      '<button type="button" class="acao" aria-label="Renomear lista">✎</button>' +
+      '<button type="button" class="acao mais' + (estado.destaqueMais ? ' destaque' : '') + '" data-acao="menu" aria-label="Opções da lista">⋯</button></div>' +
+      '<div class="conteudo">' + pend.map(function (i) { return linha(i, estado.mudou); }).join('') +
+      (conc.length ? '<div class="grupo">Concluídos (' + conc.length + ')</div>' : '') +
+      conc.map(function (i) { return linha(i, estado.mudou); }).join('') + '</div>' +
+      '<div class="rodape"><div class="total"><span>Total concluído</span><strong>' + reais(totalConc) + '</strong></div>' +
+      '<div class="progresso"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
+      '<div class="resumo">' + Msg.resumo(conc.length, itens.length, reais(previsto)) + '</div>' +
+      '<div class="btn">+ Adicionar item</div></div>';
+    if (estado.camada === 'menu') html += menu();
+    else if (estado.camada) html += dialog(estado.camada);
+    return html;
+  }
+
+  /* Telas estáticas */
+  var desmarcados = copia(EXEMPLO).map(function (i) { return Object.assign(i, { ok: false }); });
+  var zerados = copia(EXEMPLO).map(function (i) { return Object.assign(i, { cent: 0 }); });
+  var quadros = [
+    { e: { itens: EXEMPLO, destaqueMais: true }, t: '1 · Cabeçalho com "⋯"', d: 'O "⋯" entra ao lado do "✎", com o mesmo tamanho e a mesma cor. Ele fica escondido enquanto a lista carrega, como o "✎".' },
+    { e: { itens: EXEMPLO, camada: 'menu' }, t: '2 · Menu "Opções da lista"', d: 'É o mesmo menu inferior do card e do Backup. "Zerar preços" fica em vermelho porque apaga dados. Tocar fora ou usar o voltar do Android fecha o menu.' },
+    { e: { itens: EXEMPLO, camada: { titulo: 'Desmarcar todos os itens?', msg: Msg.desmarcarMsg(4), sim: 'Desmarcar', nao: 'Cancelar' } }, t: '3 · Confirmar "Desmarcar todos"', d: 'A mensagem diz quantos concluídos voltam. Não diz que não dá para desfazer, porque basta marcar de novo.' },
+    { e: { itens: desmarcados, mudou: [3, 4, 5, 6] }, t: '4 · Depois de desmarcar', d: 'Os 6 itens ficam pendentes na ordem de inclusão, e o rótulo "Concluídos" some. O total concluído vai a R$ 0,00 e o previsto continua R$ 51,40.' },
+    { e: { itens: EXEMPLO, camada: { titulo: 'Zerar preços?', msg: Msg.zerarMsg(6), sim: 'Zerar', nao: 'Cancelar' } }, t: '5 · Confirmar "Zerar preços"', d: 'Conta só os itens que têm preço e avisa que a ação não pode ser desfeita.' },
+    { e: { itens: zerados, mudou: [1, 2, 3, 4, 5, 6] }, t: '6 · Depois de zerar os preços', d: 'Cada linha fica "qtd UN × R$ 0,00", e as quantidades, as marcações e a ordem não mudam. O total e o previsto vão a R$ 0,00.' },
+    { e: { itens: zerados, camada: { titulo: 'Atenção', msg: 'Nenhum item com preço para zerar.', sim: 'OK' } }, t: '7 · Nada para fazer', d: 'Se não há concluídos, ou não há preços, aparece "Atenção" com um botão só, e nada é gravado.' }
+  ];
+  document.getElementById('estaticas').innerHTML = quadros.map(function (q) {
+    return '<figure><div class="phone"><div class="screen" inert>' + tela(q.e) + '</div></div>' +
+      '<figcaption><b>' + esc(q.t) + '</b>' + esc(q.d) + '</figcaption></figure>';
+  }).join('');
+
+  /* Aparelho interativo */
+  var vivo = document.getElementById('vivo');
+  var estado, timer;
+  function reiniciar() { estado = { itens: copia(EXEMPLO), camada: null, mudou: [] }; desenhar(); }
+  function desenhar() { vivo.innerHTML = tela(estado); }
+  function destacar(ids) {
+    estado.mudou = ids; desenhar();
+    clearTimeout(timer);
+    timer = setTimeout(function () { estado.mudou = []; desenhar(); }, 1800);
+  }
+  var aoConfirmar = null;
+  function perguntar(d, acao) { estado.camada = d; aoConfirmar = acao; desenhar(); }
+
+  vivo.addEventListener('click', function (ev) {
+    var alvo = ev.target.closest('[data-acao],[data-marcar]');
+    if (!alvo) return;
+    var marcar = alvo.getAttribute('data-marcar');
+    if (marcar && !estado.camada) {
+      estado.itens.forEach(function (i) { if (i.id === Number(marcar)) i.ok = !i.ok; });
+      desenhar(); return;
+    }
+    switch (alvo.getAttribute('data-acao')) {
+      case 'menu': estado.camada = 'menu'; desenhar(); break;
+      case 'menu-fechar': estado.camada = null; desenhar(); break;
+      case 'desmarcar': {
+        var conc = estado.itens.filter(function (i) { return i.ok; });
+        if (!conc.length) { perguntar({ titulo: 'Atenção', msg: 'Nenhum item concluído para desmarcar.', sim: 'OK' }, null); break; }
+        perguntar({ titulo: 'Desmarcar todos os itens?', msg: Msg.desmarcarMsg(conc.length), sim: 'Desmarcar', nao: 'Cancelar' }, function () {
+          conc.forEach(function (i) { i.ok = false; });
+          return conc.map(function (i) { return i.id; });
+        });
+        break;
+      }
+      case 'zerar': {
+        var comPreco = estado.itens.filter(function (i) { return i.cent > 0; });
+        if (!comPreco.length) { perguntar({ titulo: 'Atenção', msg: 'Nenhum item com preço para zerar.', sim: 'OK' }, null); break; }
+        perguntar({ titulo: 'Zerar preços?', msg: Msg.zerarMsg(comPreco.length), sim: 'Zerar', nao: 'Cancelar' }, function () {
+          comPreco.forEach(function (i) { i.cent = 0; });
+          return comPreco.map(function (i) { return i.id; });
+        });
+        break;
+      }
+      case 'dlg-sim': {
+        var acao = aoConfirmar; aoConfirmar = null; estado.camada = null;
+        if (acao) destacar(acao()); else desenhar();
+        break;
+      }
+      case 'dlg-nao': aoConfirmar = null; estado.camada = null; desenhar(); break;
+    }
+  });
+  document.getElementById('reset').addEventListener('click', reiniciar);
+  reiniciar();
+})();
+</script>
+</body>
+</html>
