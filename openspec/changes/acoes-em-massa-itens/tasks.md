@@ -22,7 +22,7 @@ Cada tarefa segue o ciclo de TDD: escrever o teste com os valores da spec, ver o
 
 ## 2. Tela de detalhe
 
-- [ ] 2.1 Botão "⋯" no cabeçalho e menu "Opções da lista" (decisões 1 e 5 do design). O botão fica escondido enquanto a lista carrega. O menu tem "Desmarcar todos" (○), "Zerar preços" (⊘, perigo) e "Cancelar". Verificar: testes em `TelaDetalheLista.test.tsx`:
+- [x] 2.1 Botão "⋯" no cabeçalho e menu "Opções da lista" (decisões 1 e 5 do design). O botão fica escondido enquanto a lista carrega. O menu tem "Desmarcar todos" (○), "Zerar preços" (⊘, perigo) e "Cancelar". Verificar: testes em `TelaDetalheLista.test.tsx`:
   - o cabeçalho mostra "✎" e "⋯" com a lista carregada e esconde os dois enquanto carrega;
   - o toque em "⋯" abre o menu com as opções na ordem;
   - o toque fora fecha o menu sem gravar;

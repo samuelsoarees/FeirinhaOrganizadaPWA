@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Carregando } from '../componentes/Carregando'
+import { MenuInferior } from '../componentes/MenuInferior'
 import { ModalNomeLista } from '../componentes/ModalNomeLista'
 import { PainelItem } from '../componentes/PainelItem'
 import { useDialog } from '../componentes/useDialog'
@@ -33,6 +34,7 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
   const [estado, setEstado] = useState<EstadoTela>({ fase: 'carregando' })
   const [painel, setPainel] = useState<EstadoPainel | null>(null)
   const [renomeando, setRenomeando] = useState(false)
+  const [menuOpcoes, setMenuOpcoes] = useState(false)
   const [revelado, setRevelado] = useState<number | null>(null)
   const saindo = useRef(false)
 
@@ -180,6 +182,11 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
     }
   }
 
+  const abrirOpcoes = () => {
+    setRevelado(null)
+    setMenuOpcoes(true)
+  }
+
   const abrirRenomear = () => {
     flushSync(() => setRenomeando(true))
   }
@@ -235,6 +242,15 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
           onClick={abrirRenomear}
         >
           ✎
+        </button>
+        <button
+          type="button"
+          className="topo-detalhe-acao topo-detalhe-mais"
+          aria-label={Mensagens.detalhe.opcoesDaLista}
+          disabled={!lista}
+          onClick={abrirOpcoes}
+        >
+          ⋯
         </button>
       </header>
 
@@ -297,6 +313,16 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
         aoSalvar={(dados) => void salvarItem(dados)}
         aoCancelar={() => setPainel(null)}
         aoExcluir={painel?.modo === 'editar' ? () => void excluirItem(painel.item) : undefined}
+      />
+
+      <MenuInferior
+        aberto={menuOpcoes}
+        titulo={Mensagens.detalhe.opcoesDaLista}
+        aoFechar={() => setMenuOpcoes(false)}
+        opcoes={[
+          { rotulo: Mensagens.detalhe.desmarcarTodos, icone: '○', aoEscolher: () => setMenuOpcoes(false) },
+          { rotulo: Mensagens.detalhe.zerarPrecos, icone: '⊘', perigo: true, aoEscolher: () => setMenuOpcoes(false) },
+        ]}
       />
 
       <ModalNomeLista

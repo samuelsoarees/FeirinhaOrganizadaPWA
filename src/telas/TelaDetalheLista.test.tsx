@@ -656,3 +656,63 @@ describe('voltar', () => {
     expect(screen.queryByRole('dialog', { name: 'Renomear lista' })).not.toBeInTheDocument()
   })
 })
+
+function abrirOpcoes() {
+  fireEvent.click(screen.getByRole('button', { name: 'Opções da lista' }))
+  return screen.getByRole('dialog', { name: 'Opções da lista' })
+}
+
+function escolherOpcao(rotulo: 'Desmarcar todos' | 'Zerar preços') {
+  fireEvent.click(within(abrirOpcoes()).getByRole('button', { name: rotulo }))
+}
+
+describe('opções da lista', () => {
+  it('o cabeçalho mostra "✎" e "⋯" com a lista carregada', async () => {
+    await renderizarPronta()
+    expect(screen.getByRole('button', { name: 'Opções da lista' })).toHaveTextContent('⋯')
+    expect(screen.getByRole('button', { name: 'Opções da lista' })).toBeEnabled()
+  })
+
+  it('enquanto a lista carrega, "✎" e "⋯" ficam escondidos', async () => {
+    vi.spyOn(repositorios.itens, 'listar').mockReturnValue(new Promise(() => {}))
+    renderizar()
+    expect(screen.getByRole('button', { name: 'Renomear lista' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Opções da lista' })).toBeDisabled()
+  })
+
+  it('"⋯" abre o menu com "Desmarcar todos", "Zerar preços" em vermelho e "Cancelar"', async () => {
+    await renderizarPronta()
+    const menu = abrirOpcoes()
+    expect(within(menu).getAllByRole('button').map((botao) => botao.textContent)).toEqual([
+      '○Desmarcar todos',
+      '⊘Zerar preços',
+      'Cancelar',
+    ])
+    expect(within(menu).getByRole('button', { name: 'Zerar preços' })).toHaveClass('menu-opcao--perigo')
+    expect(within(menu).getByRole('button', { name: 'Desmarcar todos' })).not.toHaveClass('menu-opcao--perigo')
+  })
+
+  it('tocar fora fecha o menu sem alterar nada', async () => {
+    await renderizarPronta()
+    abrirOpcoes()
+    const fundo = screen.getByTestId('fundo-menu')
+    fireEvent.pointerDown(fundo)
+    fireEvent.click(fundo)
+    expect(screen.queryByRole('dialog', { name: 'Opções da lista' })).not.toBeInTheDocument()
+    expect(screen.getByText('Concluídos (4)')).toBeInTheDocument()
+  })
+
+  it('"Cancelar" fecha o menu', async () => {
+    await renderizarPronta()
+    fireEvent.click(within(abrirOpcoes()).getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByRole('dialog', { name: 'Opções da lista' })).not.toBeInTheDocument()
+  })
+
+  it('o voltar do Android fecha só o menu e continua no detalhe', async () => {
+    await renderizarPronta()
+    abrirOpcoes()
+    voltarDoAndroid()
+    expect(screen.queryByRole('dialog', { name: 'Opções da lista' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Feira do sábado' })).toBeInTheDocument()
+  })
+})
