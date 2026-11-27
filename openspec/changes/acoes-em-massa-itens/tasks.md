@@ -42,7 +42,7 @@ Cada tarefa segue o ciclo de TDD: escrever o teste com os valores da spec, ver o
   - numa falha aparece "Não foi possível zerar os preços. Tente novamente." e os preços ficam como antes;
   - com a lista excluída aparece o aviso e a tela volta para Listas;
   - um toque no marcador durante a gravação é ignorado.
-- [ ] 2.4 Conferir lado a lado com `openspec/changes/acoes-em-massa-itens/mock.html` no `npm run dev` em 390 px (cabeçalho, menu, os dois dialogs e os avisos) e ajustar as diferenças. Verificar: `npm run lint`, `npm test` e `npm run build` passam.
+- [x] 2.4 Conferir lado a lado com `openspec/changes/acoes-em-massa-itens/mock.html` no `npm run dev` em 390 px (cabeçalho, menu, os dois dialogs e os avisos) e ajustar as diferenças. Verificar: `npm run lint`, `npm test` e `npm run build` passam.
 
 ## 3. Publicação e validação no celular
 
