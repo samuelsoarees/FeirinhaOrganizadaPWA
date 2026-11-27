@@ -10,7 +10,7 @@ Cada tarefa segue o ciclo de TDD: escrever o teste com os valores da spec, ver o
   - não mexe na outra lista;
   - lança `ErroNaoEncontrado` de lista;
   - numa falha simulada, lança `ErroArmazenamento('desmarcar')` e os 4 itens continuam concluídos.
-- [ ] 1.3 `RepositorioItens.zerarPrecos(idLista): Promise<number>`, numa transação (decisão 2 do design). Verificar: testes, um por cenário de "Zerar os preços da lista":
+- [x] 1.3 `RepositorioItens.zerarPrecos(idLista): Promise<number>`, numa transação (decisão 2 do design). Verificar: testes, um por cenário de "Zerar os preços da lista":
   - devolve 2 e mantém quantidade e marcação;
   - deixa os totais em 0 com os mesmos concluídos;
   - devolve 1 com "Alho" já em R$ 0,00;
@@ -18,7 +18,7 @@ Cada tarefa segue o ciclo de TDD: escrever o teste com os valores da spec, ver o
   - não mexe na outra lista;
   - lança `ErroNaoEncontrado` de lista;
   - numa falha simulada, lança `ErroArmazenamento('zerar')` e os 6 preços ficam como antes.
-- [ ] 1.4 Fechar o grupo. Verificar: `npm run lint`, `npm test` e `npm run build` passam.
+- [x] 1.4 Fechar o grupo. Verificar: `npm run lint`, `npm test` e `npm run build` passam.
 
 ## 2. Tela de detalhe
 

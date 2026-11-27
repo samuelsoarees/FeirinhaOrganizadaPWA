@@ -44,12 +44,15 @@ desmarcarTodos(idLista: number): Promise<number>  // quantos itens foram desmarc
 zerarPrecos(idLista: number): Promise<number>     // quantos itens tinham preço e foram zerados
 ```
 
-Cada operação roda numa `transaction('rw', listas, itens)`:
+As duas usam o mesmo método privado `alterarEmLote(operacao, idLista, filtro, mudanca)`, que roda numa `transaction('rw', listas, itens)`:
 1. lê a lista e, se ela não existir, lança `erroListaNaoEncontrada()`;
-2. grava com `itens.where('idLista').equals(idLista).filter(...).modify(...)`;
-3. devolve a contagem do `modify`.
+2. lê os itens com `itens.where('idLista').equals(idLista).filter(filtro).toArray()`;
+3. grava a mudança neles com `itens.bulkUpdate(...)`;
+4. devolve quantos itens foram lidos no passo 2.
 
-O `modify` só toca os registros do filtro: `concluido === 1` para desmarcar, `valorUnitarioCentavos > 0` para zerar. Assim a contagem é exata e não há escrita sem efeito. Tudo vai dentro de `protegido(...)` com as operações novas `'desmarcar'` e `'zerar'` em `OperacaoArmazenamento`.
+O filtro é `concluido === 1` para desmarcar e `valorUnitarioCentavos > 0` para zerar. Assim a contagem é exata e não há escrita sem efeito. Tudo vai dentro de `protegido(...)` com as operações novas `'desmarcar'` e `'zerar'` em `OperacaoArmazenamento`.
+
+Ler e depois gravar com `bulkUpdate`, em vez de usar `Collection.modify`, deixa o teste simular uma falha no meio da gravação e conferir que a transação desfaz o que já tinha sido gravado. A garantia de tudo ou nada é a mesma.
 
 - **Alternativa descartada**: chamar `marcar()` ou `editar()` item a item a partir da tela. São N transações, e uma falha no meio deixaria a lista meio alterada, contra o requisito de não alterar dados parcialmente.
 - **Alternativa descartada**: usar o índice `[idLista+concluido]` para desmarcar. Ele funcionaria, mas o `where('idLista')` com `filter` cobre as duas operações do mesmo jeito, e as listas têm dezenas de itens, não milhares.

@@ -68,6 +68,13 @@ export class RepositorioItens {
     return this.alterarEmLote('desmarcar', idLista, (registro) => registro.concluido === 1, { concluido: 0 })
   }
 
+  // Grava R$ 0,00 em todos os itens da lista que têm preço. Devolve quantos foram alterados.
+  zerarPrecos(idLista: number): Promise<number> {
+    return this.alterarEmLote('zerar', idLista, (registro) => registro.valorUnitarioCentavos > 0, {
+      valorUnitarioCentavos: 0,
+    })
+  }
+
   // Grava uma mudança em todos os itens da lista que passam no filtro, numa única transação:
   // se o banco falhar no meio, nenhum item muda. Devolve quantos itens foram alterados.
   private alterarEmLote(
