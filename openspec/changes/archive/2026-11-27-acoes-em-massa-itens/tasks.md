@@ -46,8 +46,8 @@ Cada tarefa segue o ciclo de TDD: escrever o teste com os valores da spec, ver o
 
 ## 3. Publicação e validação no celular
 
-- [ ] 3.1 Subir a versão com `npm version 26.11.4 --no-git-tag-version`, ou o número seguinte do mês na data da publicação, e publicar na `main` com o OK do usuário. Verificar: o workflow fica verde e o rodapé de "Minhas Listas" mostra a nova versão.
-- [ ] 3.2 **Validação no celular: ponto de parada.** Roteiro no iPhone (Safari, app instalado) e no Android (Chrome, app instalado):
+- [x] 3.1 Subir a versão com `npm version 26.11.4 --no-git-tag-version`, ou o número seguinte do mês na data da publicação, e publicar na `main` com o OK do usuário. Verificar: o workflow fica verde e o rodapé de "Minhas Listas" mostra a nova versão.
+- [x] 3.2 **Validação no celular: ponto de parada.** Roteiro no iPhone (Safari, app instalado) e no Android (Chrome, app instalado):
   1. Numa lista com 30 ou mais itens, alguns concluídos, tocar em "⋯" e depois em "Desmarcar todos" e "Desmarcar". Todos voltam aos pendentes na ordem de inclusão, sem engasgar na animação.
   2. Marcar alguns itens, tocar em "⋯" e depois em "Zerar preços". Conferir a quantidade na mensagem e tocar em "Zerar". Os preços e os totais vão a R$ 0,00, e as marcações e quantidades ficam como estavam.
   3. Repetir as duas opções sem nada para fazer e ver os avisos "Atenção".
@@ -55,6 +55,7 @@ Cada tarefa segue o ciclo de TDD: escrever o teste com os valores da spec, ver o
   5. Fechar o app por completo e reabrir: o resultado das ações continua gravado.
 
   Aguardar o OK do usuário.
+  - **Validado (27/11/2026):** OK do usuário no celular.
 
 ## Workflow follow-up
 
