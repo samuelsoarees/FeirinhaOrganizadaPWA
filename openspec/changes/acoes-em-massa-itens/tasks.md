@@ -34,7 +34,7 @@ Cada tarefa segue o ciclo de TDD: escrever o teste com os valores da spec, ver o
   - sem concluídos aparece "Nenhum item concluído para desmarcar." e o banco não é chamado;
   - numa falha aparece "Não foi possível desmarcar os itens. Tente novamente." e os itens continuam em "Concluídos";
   - com a lista excluída aparece o aviso e a tela volta para Listas.
-- [ ] 2.3 Fluxo de "Zerar preços" (decisão 4 do design). Verificar: testes de tela, um por cenário:
+- [x] 2.3 Fluxo de "Zerar preços" (decisão 4 do design). Verificar: testes de tela, um por cenário:
   - confirmar: "6 UN × R$ 0,00" e "R$ 0,00" no mesmo grupo, e "4 de 6 itens concluídos · previsto R$ 0,00";
   - a mensagem conta só os itens com preço (5 de 6);
   - cancelar não grava;

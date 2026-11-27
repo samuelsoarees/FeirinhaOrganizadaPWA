@@ -789,3 +789,105 @@ describe('desmarcar todos pela tela', () => {
     await waitFor(() => expect(window.location.hash).toBe('#/'))
   })
 })
+
+async function precosNoBanco(): Promise<number[]> {
+  return (await banco.itens.orderBy('id').toArray()).map((registro) => registro.valorUnitarioCentavos)
+}
+
+describe('zerar preços pela tela', () => {
+  it('confirmar zera os valores, mantém grupos e marcações e atualiza o rodapé', async () => {
+    await renderizarPronta()
+    const antes = ordemNaTela()
+    escolherOpcao('Zerar preços')
+    expect(dialog()).toHaveTextContent('Zerar preços?')
+    expect(dialog()).toHaveTextContent(
+      'Os 6 itens com preço ficarão com valor unitário R$ 0,00. Essa ação não pode ser desfeita.',
+    )
+
+    fecharDialog('Zerar')
+
+    await waitFor(() => expect(linha('Tomate')).toHaveTextContent('6 UN × R$ 0,00'))
+    expect(linha('Tomate')).toHaveClass('item--ok')
+    expect(ordemNaTela()).toEqual(antes)
+    expect(rodape()).toHaveTextContent('R$ 0,00')
+    expect(rodape()).toHaveTextContent('4 de 6 itens concluídos · previsto R$ 0,00')
+    expect(await precosNoBanco()).toEqual([0, 0, 0, 0, 0, 0])
+  })
+
+  it('a mensagem conta só os itens com preço', async () => {
+    await renderizarPronta(
+      feiraDoSabado.map((item) => (item.descricao === 'Abacaxi pérola' ? { ...item, valorUnitarioCentavos: 0 } : item)),
+    )
+    escolherOpcao('Zerar preços')
+    expect(dialog()).toHaveTextContent(
+      'Os 5 itens com preço ficarão com valor unitário R$ 0,00. Essa ação não pode ser desfeita.',
+    )
+  })
+
+  it('"Cancelar" fecha o dialog e os preços continuam', async () => {
+    await renderizarPronta()
+    escolherOpcao('Zerar preços')
+    fecharDialog('Cancelar')
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
+    expect(linha('Tomate')).toHaveTextContent('6 UN × R$ 1,20')
+    expect(await precosNoBanco()).toEqual([120, 800, 350, 110, 200, 250])
+  })
+
+  it.each([
+    ['lista vazia', []],
+    ['todos com R$ 0,00', feiraDoSabado.map((item) => ({ ...item, valorUnitarioCentavos: 0 }))],
+  ])('%s: avisa "Nenhum item com preço para zerar." e não grava', async (_, itens) => {
+    await renderizarPronta(itens)
+    const zerarPrecos = vi.spyOn(repositorios.itens, 'zerarPrecos')
+    escolherOpcao('Zerar preços')
+    expect(dialog()).toHaveTextContent('Atenção')
+    expect(dialog()).toHaveTextContent('Nenhum item com preço para zerar.')
+    fecharDialog()
+    expect(zerarPrecos).not.toHaveBeenCalled()
+  })
+
+  it('falha mostra "Ops!" e os preços continuam', async () => {
+    await renderizarPronta()
+    vi.spyOn(repositorios.itens, 'zerarPrecos').mockRejectedValue(new ErroArmazenamento('zerar', new Error('disk I/O error')))
+    escolherOpcao('Zerar preços')
+    fecharDialog('Zerar')
+    await waitFor(() => expect(dialog()).toHaveTextContent('Ops!'))
+    expect(dialog()).toHaveTextContent('Não foi possível zerar os preços. Tente novamente.')
+    expect(dialog()).not.toHaveTextContent('disk')
+    fecharDialog()
+    expect(linha('Tomate')).toHaveTextContent('6 UN × R$ 1,20')
+  })
+
+  it('lista que não existe mais avisa e volta para Listas', async () => {
+    window.location.hash = `#/lista/${idLista}`
+    await renderizarPronta()
+    await repositorios.listas.excluir(idLista)
+    escolherOpcao('Zerar preços')
+    fecharDialog('Zerar')
+    await waitFor(() => expect(dialog()).toHaveTextContent('Esta lista não existe mais. Atualizamos a tela para você.'))
+    fecharDialog()
+    await waitFor(() => expect(window.location.hash).toBe('#/'))
+  })
+
+  it('toque no marcador enquanto os preços são zerados é ignorado', async () => {
+    await renderizarPronta()
+    let terminar: (quantidade: number) => void = () => {}
+    vi.spyOn(repositorios.itens, 'zerarPrecos').mockReturnValue(
+      new Promise<number>((resolver) => {
+        terminar = resolver
+      }),
+    )
+    const marcar = vi.spyOn(repositorios.itens, 'marcar')
+    escolherOpcao('Zerar preços')
+    fecharDialog('Zerar')
+    await waitFor(() => expect(repositorios.itens.zerarPrecos).toHaveBeenCalled())
+
+    fireEvent.click(marcador('Pimentão'))
+
+    await act(async () => {
+      terminar(6)
+    })
+    expect(marcar).not.toHaveBeenCalled()
+    expect(await concluidoNoBanco('Pimentão')).toBe(false)
+  })
+})

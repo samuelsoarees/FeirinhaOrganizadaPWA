@@ -9,7 +9,7 @@ import { useOperacao } from '../componentes/useOperacao'
 import { useRepositorios } from '../componentes/useRepositorios'
 import { ErroNaoEncontrado } from '../dominio/erros'
 import { formatarReais } from '../dominio/formatacao'
-import { ordenarItens, progressoConcluido, textoResumoRodape, type DadosItem, type Item } from '../dominio/itens'
+import { contarComPreco, ordenarItens, progressoConcluido, textoResumoRodape, type DadosItem, type Item } from '../dominio/itens'
 import { resumirItens, type Lista } from '../dominio/listas'
 import { Mensagens } from '../dominio/mensagens'
 import { usePilhaCamadas } from '../navegacao/camadas'
@@ -232,6 +232,19 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
     })
   }
 
+  const zerarPrecos = () => {
+    const quantidade = contarComPreco(itens)
+    return alterarEmLote({
+      quantidade,
+      nadaParaFazer: Mensagens.detalhe.nadaParaZerar,
+      titulo: Mensagens.detalhe.zerarTitulo,
+      mensagem: Mensagens.detalhe.zerarMensagem(quantidade),
+      textoConfirmar: Mensagens.detalhe.zerar,
+      mensagemFalha: Mensagens.detalhe.falhaZerar,
+      gravar: () => repositorios.itens.zerarPrecos(idLista),
+    })
+  }
+
   const abrirRenomear = () => {
     flushSync(() => setRenomeando(true))
   }
@@ -366,7 +379,7 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
         aoFechar={() => setMenuOpcoes(false)}
         opcoes={[
           { rotulo: Mensagens.detalhe.desmarcarTodos, icone: '○', aoEscolher: () => void desmarcarTodos() },
-          { rotulo: Mensagens.detalhe.zerarPrecos, icone: '⊘', perigo: true, aoEscolher: () => setMenuOpcoes(false) },
+          { rotulo: Mensagens.detalhe.zerarPrecos, icone: '⊘', perigo: true, aoEscolher: () => void zerarPrecos() },
         ]}
       />
 
