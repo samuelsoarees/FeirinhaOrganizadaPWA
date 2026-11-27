@@ -51,6 +51,11 @@
   color: var(--texto-2);
 }
 
+.topo-detalhe-mais {
+  font-size: 22px;
+  letter-spacing: 1px;
+}
+
 .topo-detalhe-voltar:active,
 .topo-detalhe-acao:active {
   background: var(--superficie);

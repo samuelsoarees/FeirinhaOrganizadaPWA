@@ -31,7 +31,7 @@ export class ErroBackupInvalido extends Error {
   }
 }
 
-export type OperacaoArmazenamento = 'listar' | 'salvar' | 'excluir' | 'marcar' | 'exportar' | 'importar'
+export type OperacaoArmazenamento = 'listar' | 'salvar' | 'excluir' | 'marcar' | 'desmarcar' | 'zerar' | 'exportar' | 'importar'
 
 // Falha técnica do banco. A tela nunca mostra o texto técnico, só a mensagem genérica da operação.
 export class ErroArmazenamento extends Error {

@@ -235,3 +235,143 @@ describe('obter lista', () => {
     await expect(repositorios.listas.obter(999)).rejects.toBeInstanceOf(ErroNaoEncontrado)
   })
 })
+
+// "Abacaxi" e "Pimentão" pendentes; "Tomate" e "Alface" concluídos, na ordem de inclusão.
+async function criarFeiraMista(lista = idLista): Promise<number[]> {
+  const ids = []
+  for (const [descricao, concluido] of [
+    ['Abacaxi', false],
+    ['Tomate', true],
+    ['Pimentão', false],
+    ['Alface', true],
+  ] as const) {
+    const id = await repositorios.itens.inserir(lista, { ...banana, descricao })
+    if (concluido) await repositorios.itens.marcar(id, true)
+    ids.push(id)
+  }
+  return ids
+}
+
+describe('desmarcar todos os itens da lista', () => {
+  it('desmarca os concluídos, mantém os dados e informa quantos foram desmarcados', async () => {
+    await criarFeiraMista()
+    const antes = await banco.itens.where('idLista').equals(idLista).sortBy('id')
+    expect(await repositorios.itens.desmarcarTodos(idLista)).toBe(2)
+    const depois = await banco.itens.where('idLista').equals(idLista).sortBy('id')
+    expect(depois).toEqual(antes.map((registro) => ({ ...registro, concluido: 0 })))
+  })
+
+  it('os itens voltam à ordem de inclusão', async () => {
+    await criarFeiraMista()
+    await repositorios.itens.desmarcarTodos(idLista)
+    expect((await repositorios.itens.listar(idLista)).map((item) => item.descricao)).toEqual([
+      'Abacaxi',
+      'Tomate',
+      'Pimentão',
+      'Alface',
+    ])
+  })
+
+  it('sem concluídos não muda nada e informa 0', async () => {
+    await repositorios.itens.inserir(idLista, banana)
+    const antes = await banco.itens.toArray()
+    expect(await repositorios.itens.desmarcarTodos(idLista)).toBe(0)
+    expect(await banco.itens.toArray()).toEqual(antes)
+  })
+
+  it('os itens de outras listas não mudam', async () => {
+    const outra = await repositorios.listas.inserir('Feira do mês')
+    await criarFeiraMista()
+    await criarFeiraMista(outra)
+    await repositorios.itens.desmarcarTodos(idLista)
+    expect(await banco.itens.where('idLista').equals(outra).filter((r) => r.concluido === 1).count()).toBe(2)
+  })
+
+  it('lista que não existe mais → ErroNaoEncontrado de lista', async () => {
+    await repositorios.listas.excluir(idLista)
+    const erro = await repositorios.itens.desmarcarTodos(idLista).catch((e: unknown) => e)
+    expect(erro).toBeInstanceOf(ErroNaoEncontrado)
+    expect((erro as ErroNaoEncontrado).alvo).toBe('lista')
+    expect((erro as Error).message).toBe('Esta lista não existe mais. Atualizamos a tela para você.')
+  })
+
+  it('falha no meio da gravação vira ErroArmazenamento de desmarcar e nenhum item muda', async () => {
+    for (const descricao of ['Tomate', 'Alface', 'Ovos', 'Manga']) {
+      await repositorios.itens.marcar(await repositorios.itens.inserir(idLista, { ...banana, descricao }), true)
+    }
+    const gravar = banco.itens.bulkUpdate.bind(banco.itens)
+    vi.spyOn(banco.itens, 'bulkUpdate').mockImplementation((mudancas) =>
+      gravar(mudancas.slice(0, 2)).then(() => {
+        throw new Error('disk I/O error')
+      }),
+    )
+    const erro = await repositorios.itens.desmarcarTodos(idLista).catch((e: unknown) => e)
+    expect(erro).toBeInstanceOf(ErroArmazenamento)
+    expect((erro as ErroArmazenamento).operacao).toBe('desmarcar')
+    vi.restoreAllMocks()
+    expect(await banco.itens.filter((r) => r.concluido === 1).count()).toBe(4)
+  })
+})
+
+describe('zerar os preços da lista', () => {
+  it('zera pendentes e concluídos, mantém quantidade e marcação e informa quantos mudaram', async () => {
+    const tomate = await repositorios.itens.inserir(idLista, { descricao: 'Tomate', quantidade: 6, valorUnitarioCentavos: 120 })
+    await repositorios.itens.marcar(tomate, true)
+    const pimentao = await repositorios.itens.inserir(idLista, { descricao: 'Pimentão', quantidade: 3, valorUnitarioCentavos: 200 })
+    expect(await repositorios.itens.zerarPrecos(idLista)).toBe(2)
+    expect(await banco.itens.get(tomate)).toMatchObject({ descricao: 'Tomate', quantidade: 6, valorUnitarioCentavos: 0, concluido: 1 })
+    expect(await banco.itens.get(pimentao)).toMatchObject({ descricao: 'Pimentão', quantidade: 3, valorUnitarioCentavos: 0, concluido: 0 })
+  })
+
+  it('os totais vão a R$ 0,00 e a quantidade de concluídos continua a mesma', async () => {
+    await criarFeiraMista()
+    await repositorios.itens.zerarPrecos(idLista)
+    const [resumo] = await repositorios.listas.listar()
+    expect(resumo).toMatchObject({ totalConcluidoCentavos: 0, totalPrevistoCentavos: 0, quantidadeConcluidos: 2 })
+  })
+
+  it('item que já estava sem preço não conta como alterado', async () => {
+    const alho = await repositorios.itens.inserir(idLista, { ...banana, descricao: 'Alho', valorUnitarioCentavos: 0 })
+    const cebola = await repositorios.itens.inserir(idLista, { ...banana, descricao: 'Cebola', valorUnitarioCentavos: 400 })
+    expect(await repositorios.itens.zerarPrecos(idLista)).toBe(1)
+    expect((await banco.itens.get(alho))?.valorUnitarioCentavos).toBe(0)
+    expect((await banco.itens.get(cebola))?.valorUnitarioCentavos).toBe(0)
+  })
+
+  it('sem itens com preço não muda nada e informa 0', async () => {
+    await repositorios.itens.inserir(idLista, { ...banana, valorUnitarioCentavos: 0 })
+    const antes = await banco.itens.toArray()
+    expect(await repositorios.itens.zerarPrecos(idLista)).toBe(0)
+    expect(await banco.itens.toArray()).toEqual(antes)
+  })
+
+  it('os itens de outras listas mantêm os preços', async () => {
+    const outra = await repositorios.listas.inserir('Feira do mês')
+    const deOutra = await repositorios.itens.inserir(outra, banana)
+    await repositorios.itens.inserir(idLista, banana)
+    await repositorios.itens.zerarPrecos(idLista)
+    expect((await banco.itens.get(deOutra))?.valorUnitarioCentavos).toBe(75)
+  })
+
+  it('lista que não existe mais → ErroNaoEncontrado de lista', async () => {
+    await repositorios.listas.excluir(idLista)
+    const erro = await repositorios.itens.zerarPrecos(idLista).catch((e: unknown) => e)
+    expect(erro).toBeInstanceOf(ErroNaoEncontrado)
+    expect((erro as ErroNaoEncontrado).alvo).toBe('lista')
+  })
+
+  it('falha no meio da gravação vira ErroArmazenamento de zerar e os preços continuam', async () => {
+    for (let i = 1; i <= 6; i++) await repositorios.itens.inserir(idLista, { ...banana, descricao: `Item ${i}`, valorUnitarioCentavos: i * 100 })
+    const gravar = banco.itens.bulkUpdate.bind(banco.itens)
+    vi.spyOn(banco.itens, 'bulkUpdate').mockImplementation((mudancas) =>
+      gravar(mudancas.slice(0, 3)).then(() => {
+        throw new Error('disk I/O error')
+      }),
+    )
+    const erro = await repositorios.itens.zerarPrecos(idLista).catch((e: unknown) => e)
+    expect(erro).toBeInstanceOf(ErroArmazenamento)
+    expect((erro as ErroArmazenamento).operacao).toBe('zerar')
+    vi.restoreAllMocks()
+    expect((await banco.itens.orderBy('id').toArray()).map((r) => r.valorUnitarioCentavos)).toEqual([100, 200, 300, 400, 500, 600])
+  })
+})

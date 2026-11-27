@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Carregando } from '../componentes/Carregando'
+import { MenuInferior } from '../componentes/MenuInferior'
 import { ModalNomeLista } from '../componentes/ModalNomeLista'
 import { PainelItem } from '../componentes/PainelItem'
 import { useDialog } from '../componentes/useDialog'
@@ -8,7 +9,7 @@ import { useOperacao } from '../componentes/useOperacao'
 import { useRepositorios } from '../componentes/useRepositorios'
 import { ErroNaoEncontrado } from '../dominio/erros'
 import { formatarReais } from '../dominio/formatacao'
-import { ordenarItens, progressoConcluido, textoResumoRodape, type DadosItem, type Item } from '../dominio/itens'
+import { contarComPreco, ordenarItens, progressoConcluido, textoResumoRodape, type DadosItem, type Item } from '../dominio/itens'
 import { resumirItens, type Lista } from '../dominio/listas'
 import { Mensagens } from '../dominio/mensagens'
 import { usePilhaCamadas } from '../navegacao/camadas'
@@ -33,6 +34,7 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
   const [estado, setEstado] = useState<EstadoTela>({ fase: 'carregando' })
   const [painel, setPainel] = useState<EstadoPainel | null>(null)
   const [renomeando, setRenomeando] = useState(false)
+  const [menuOpcoes, setMenuOpcoes] = useState(false)
   const [revelado, setRevelado] = useState<number | null>(null)
   const saindo = useRef(false)
 
@@ -180,6 +182,69 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
     }
   }
 
+  const abrirOpcoes = () => {
+    setRevelado(null)
+    setMenuOpcoes(true)
+  }
+
+  // Fluxo comum de "Desmarcar todos" e "Zerar preços": sem nada para fazer, só avisa;
+  // senão confirma, grava tudo de uma vez e recarrega (ordem e totais vêm do banco).
+  const alterarEmLote = async (acao: {
+    quantidade: number
+    nadaParaFazer: string
+    titulo: string
+    mensagem: string
+    textoConfirmar: string
+    mensagemFalha: string
+    gravar: () => Promise<number>
+  }) => {
+    setMenuOpcoes(false)
+    if (acao.quantidade === 0) {
+      void mostrarDialog({ icone: 'alerta', titulo: Mensagens.geral.atencao, mensagem: acao.nadaParaFazer })
+      return
+    }
+    const confirmado = await mostrarDialog({
+      icone: 'alerta',
+      titulo: acao.titulo,
+      mensagem: acao.mensagem,
+      textoConfirmar: acao.textoConfirmar,
+      textoCancelar: Mensagens.geral.cancelar,
+    })
+    if (!confirmado) return
+    const resultado = await executar(acao.gravar, { mensagemFalha: acao.mensagemFalha })
+    if (resultado.status === 'ok') {
+      await carregar()
+    } else if (resultado.status === 'erro' && resultado.erro instanceof ErroNaoEncontrado) {
+      await tratarNaoEncontrado(resultado.erro, resultado.dialogFechado)
+    }
+  }
+
+  const desmarcarTodos = () => {
+    const quantidade = resumirItens(itens).quantidadeConcluidos
+    return alterarEmLote({
+      quantidade,
+      nadaParaFazer: Mensagens.detalhe.nadaParaDesmarcar,
+      titulo: Mensagens.detalhe.desmarcarTitulo,
+      mensagem: Mensagens.detalhe.desmarcarMensagem(quantidade),
+      textoConfirmar: Mensagens.detalhe.desmarcar,
+      mensagemFalha: Mensagens.detalhe.falhaDesmarcar,
+      gravar: () => repositorios.itens.desmarcarTodos(idLista),
+    })
+  }
+
+  const zerarPrecos = () => {
+    const quantidade = contarComPreco(itens)
+    return alterarEmLote({
+      quantidade,
+      nadaParaFazer: Mensagens.detalhe.nadaParaZerar,
+      titulo: Mensagens.detalhe.zerarTitulo,
+      mensagem: Mensagens.detalhe.zerarMensagem(quantidade),
+      textoConfirmar: Mensagens.detalhe.zerar,
+      mensagemFalha: Mensagens.detalhe.falhaZerar,
+      gravar: () => repositorios.itens.zerarPrecos(idLista),
+    })
+  }
+
   const abrirRenomear = () => {
     flushSync(() => setRenomeando(true))
   }
@@ -235,6 +300,15 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
           onClick={abrirRenomear}
         >
           ✎
+        </button>
+        <button
+          type="button"
+          className="topo-detalhe-acao topo-detalhe-mais"
+          aria-label={Mensagens.detalhe.opcoesDaLista}
+          disabled={!lista}
+          onClick={abrirOpcoes}
+        >
+          ⋯
         </button>
       </header>
 
@@ -297,6 +371,16 @@ export function TelaDetalheLista({ idLista }: { idLista: number }) {
         aoSalvar={(dados) => void salvarItem(dados)}
         aoCancelar={() => setPainel(null)}
         aoExcluir={painel?.modo === 'editar' ? () => void excluirItem(painel.item) : undefined}
+      />
+
+      <MenuInferior
+        aberto={menuOpcoes}
+        titulo={Mensagens.detalhe.opcoesDaLista}
+        aoFechar={() => setMenuOpcoes(false)}
+        opcoes={[
+          { rotulo: Mensagens.detalhe.desmarcarTodos, icone: '○', aoEscolher: () => void desmarcarTodos() },
+          { rotulo: Mensagens.detalhe.zerarPrecos, icone: '⊘', perigo: true, aoEscolher: () => void zerarPrecos() },
+        ]}
       />
 
       <ModalNomeLista

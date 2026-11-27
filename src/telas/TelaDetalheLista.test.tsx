@@ -656,3 +656,238 @@ describe('voltar', () => {
     expect(screen.queryByRole('dialog', { name: 'Renomear lista' })).not.toBeInTheDocument()
   })
 })
+
+function abrirOpcoes() {
+  fireEvent.click(screen.getByRole('button', { name: 'Opções da lista' }))
+  return screen.getByRole('dialog', { name: 'Opções da lista' })
+}
+
+function escolherOpcao(rotulo: 'Desmarcar todos' | 'Zerar preços') {
+  fireEvent.click(within(abrirOpcoes()).getByRole('button', { name: rotulo }))
+}
+
+describe('opções da lista', () => {
+  it('o cabeçalho mostra "✎" e "⋯" com a lista carregada', async () => {
+    await renderizarPronta()
+    expect(screen.getByRole('button', { name: 'Opções da lista' })).toHaveTextContent('⋯')
+    expect(screen.getByRole('button', { name: 'Opções da lista' })).toBeEnabled()
+  })
+
+  it('enquanto a lista carrega, "✎" e "⋯" ficam escondidos', async () => {
+    vi.spyOn(repositorios.itens, 'listar').mockReturnValue(new Promise(() => {}))
+    renderizar()
+    expect(screen.getByRole('button', { name: 'Renomear lista' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Opções da lista' })).toBeDisabled()
+  })
+
+  it('"⋯" abre o menu com "Desmarcar todos", "Zerar preços" em vermelho e "Cancelar"', async () => {
+    await renderizarPronta()
+    const menu = abrirOpcoes()
+    expect(within(menu).getAllByRole('button').map((botao) => botao.textContent)).toEqual([
+      '○Desmarcar todos',
+      '⊘Zerar preços',
+      'Cancelar',
+    ])
+    expect(within(menu).getByRole('button', { name: 'Zerar preços' })).toHaveClass('menu-opcao--perigo')
+    expect(within(menu).getByRole('button', { name: 'Desmarcar todos' })).not.toHaveClass('menu-opcao--perigo')
+  })
+
+  it('tocar fora fecha o menu sem alterar nada', async () => {
+    await renderizarPronta()
+    abrirOpcoes()
+    const fundo = screen.getByTestId('fundo-menu')
+    fireEvent.pointerDown(fundo)
+    fireEvent.click(fundo)
+    expect(screen.queryByRole('dialog', { name: 'Opções da lista' })).not.toBeInTheDocument()
+    expect(screen.getByText('Concluídos (4)')).toBeInTheDocument()
+  })
+
+  it('"Cancelar" fecha o menu', async () => {
+    await renderizarPronta()
+    fireEvent.click(within(abrirOpcoes()).getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByRole('dialog', { name: 'Opções da lista' })).not.toBeInTheDocument()
+  })
+
+  it('o voltar do Android fecha só o menu e continua no detalhe', async () => {
+    await renderizarPronta()
+    abrirOpcoes()
+    voltarDoAndroid()
+    expect(screen.queryByRole('dialog', { name: 'Opções da lista' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Feira do sábado' })).toBeInTheDocument()
+  })
+})
+
+async function quantosConcluidosNoBanco(): Promise<number> {
+  return banco.itens.filter((registro) => registro.concluido === 1).count()
+}
+
+describe('desmarcar todos pela tela', () => {
+  it('confirmar volta todos para os pendentes na ordem de inclusão e atualiza o rodapé', async () => {
+    await renderizarPronta()
+    escolherOpcao('Desmarcar todos')
+    expect(screen.queryByRole('dialog', { name: 'Opções da lista' })).not.toBeInTheDocument()
+    expect(dialog()).toHaveTextContent('Desmarcar todos os itens?')
+    expect(dialog()).toHaveTextContent('Os 4 itens concluídos voltarão para os pendentes.')
+
+    fecharDialog('Desmarcar')
+
+    await waitFor(() => expect(screen.queryByText(/^Concluídos/)).not.toBeInTheDocument())
+    expect(ordemNaTela()).toEqual(['Tomate', 'Abacaxi pérola', 'Alface americana', 'Ovos caipira', 'Pimentão', 'Manga palmer'])
+    expect(rodape()).toHaveTextContent('R$ 0,00')
+    expect(rodape()).toHaveTextContent('0 de 6 itens concluídos · previsto R$ 51,40')
+    expect(await quantosConcluidosNoBanco()).toBe(0)
+  })
+
+  it('com um item concluído, a mensagem fica no singular', async () => {
+    await renderizarPronta([{ descricao: 'Tomate', quantidade: 6, valorUnitarioCentavos: 120, concluido: true }])
+    escolherOpcao('Desmarcar todos')
+    expect(dialog()).toHaveTextContent('O 1 item concluído voltará para os pendentes.')
+  })
+
+  it('"Cancelar" fecha o dialog e os concluídos continuam', async () => {
+    await renderizarPronta()
+    escolherOpcao('Desmarcar todos')
+    fecharDialog('Cancelar')
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
+    expect(screen.getByText('Concluídos (4)')).toBeInTheDocument()
+    expect(await quantosConcluidosNoBanco()).toBe(4)
+  })
+
+  it('sem concluídos, avisa "Nenhum item concluído para desmarcar." e não grava', async () => {
+    await renderizarPronta(feiraDoSabado.map((item) => ({ ...item, concluido: false })))
+    const desmarcarTodos = vi.spyOn(repositorios.itens, 'desmarcarTodos')
+    escolherOpcao('Desmarcar todos')
+    expect(dialog()).toHaveTextContent('Atenção')
+    expect(dialog()).toHaveTextContent('Nenhum item concluído para desmarcar.')
+    expect(within(dialog()).getAllByRole('button').map((botao) => botao.textContent)).toEqual(['OK'])
+    fecharDialog()
+    expect(desmarcarTodos).not.toHaveBeenCalled()
+  })
+
+  it('falha mostra "Ops!" e os itens continuam concluídos', async () => {
+    await renderizarPronta()
+    vi.spyOn(repositorios.itens, 'desmarcarTodos').mockRejectedValue(
+      new ErroArmazenamento('desmarcar', new Error('disk I/O error')),
+    )
+    escolherOpcao('Desmarcar todos')
+    fecharDialog('Desmarcar')
+    await waitFor(() => expect(dialog()).toHaveTextContent('Ops!'))
+    expect(dialog()).toHaveTextContent('Não foi possível desmarcar os itens. Tente novamente.')
+    expect(dialog()).not.toHaveTextContent('disk')
+    fecharDialog()
+    expect(screen.getByText('Concluídos (4)')).toBeInTheDocument()
+  })
+
+  it('lista que não existe mais avisa e volta para Listas', async () => {
+    window.location.hash = `#/lista/${idLista}`
+    await renderizarPronta()
+    await repositorios.listas.excluir(idLista)
+    escolherOpcao('Desmarcar todos')
+    fecharDialog('Desmarcar')
+    await waitFor(() => expect(dialog()).toHaveTextContent('Esta lista não existe mais. Atualizamos a tela para você.'))
+    fecharDialog()
+    await waitFor(() => expect(window.location.hash).toBe('#/'))
+  })
+})
+
+async function precosNoBanco(): Promise<number[]> {
+  return (await banco.itens.orderBy('id').toArray()).map((registro) => registro.valorUnitarioCentavos)
+}
+
+describe('zerar preços pela tela', () => {
+  it('confirmar zera os valores, mantém grupos e marcações e atualiza o rodapé', async () => {
+    await renderizarPronta()
+    const antes = ordemNaTela()
+    escolherOpcao('Zerar preços')
+    expect(dialog()).toHaveTextContent('Zerar preços?')
+    expect(dialog()).toHaveTextContent(
+      'Os 6 itens com preço ficarão com valor unitário R$ 0,00. Essa ação não pode ser desfeita.',
+    )
+
+    fecharDialog('Zerar')
+
+    await waitFor(() => expect(linha('Tomate')).toHaveTextContent('6 UN × R$ 0,00'))
+    expect(linha('Tomate')).toHaveClass('item--ok')
+    expect(ordemNaTela()).toEqual(antes)
+    expect(rodape()).toHaveTextContent('R$ 0,00')
+    expect(rodape()).toHaveTextContent('4 de 6 itens concluídos · previsto R$ 0,00')
+    expect(await precosNoBanco()).toEqual([0, 0, 0, 0, 0, 0])
+  })
+
+  it('a mensagem conta só os itens com preço', async () => {
+    await renderizarPronta(
+      feiraDoSabado.map((item) => (item.descricao === 'Abacaxi pérola' ? { ...item, valorUnitarioCentavos: 0 } : item)),
+    )
+    escolherOpcao('Zerar preços')
+    expect(dialog()).toHaveTextContent(
+      'Os 5 itens com preço ficarão com valor unitário R$ 0,00. Essa ação não pode ser desfeita.',
+    )
+  })
+
+  it('"Cancelar" fecha o dialog e os preços continuam', async () => {
+    await renderizarPronta()
+    escolherOpcao('Zerar preços')
+    fecharDialog('Cancelar')
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
+    expect(linha('Tomate')).toHaveTextContent('6 UN × R$ 1,20')
+    expect(await precosNoBanco()).toEqual([120, 800, 350, 110, 200, 250])
+  })
+
+  it.each([
+    ['lista vazia', []],
+    ['todos com R$ 0,00', feiraDoSabado.map((item) => ({ ...item, valorUnitarioCentavos: 0 }))],
+  ])('%s: avisa "Nenhum item com preço para zerar." e não grava', async (_, itens) => {
+    await renderizarPronta(itens)
+    const zerarPrecos = vi.spyOn(repositorios.itens, 'zerarPrecos')
+    escolherOpcao('Zerar preços')
+    expect(dialog()).toHaveTextContent('Atenção')
+    expect(dialog()).toHaveTextContent('Nenhum item com preço para zerar.')
+    fecharDialog()
+    expect(zerarPrecos).not.toHaveBeenCalled()
+  })
+
+  it('falha mostra "Ops!" e os preços continuam', async () => {
+    await renderizarPronta()
+    vi.spyOn(repositorios.itens, 'zerarPrecos').mockRejectedValue(new ErroArmazenamento('zerar', new Error('disk I/O error')))
+    escolherOpcao('Zerar preços')
+    fecharDialog('Zerar')
+    await waitFor(() => expect(dialog()).toHaveTextContent('Ops!'))
+    expect(dialog()).toHaveTextContent('Não foi possível zerar os preços. Tente novamente.')
+    expect(dialog()).not.toHaveTextContent('disk')
+    fecharDialog()
+    expect(linha('Tomate')).toHaveTextContent('6 UN × R$ 1,20')
+  })
+
+  it('lista que não existe mais avisa e volta para Listas', async () => {
+    window.location.hash = `#/lista/${idLista}`
+    await renderizarPronta()
+    await repositorios.listas.excluir(idLista)
+    escolherOpcao('Zerar preços')
+    fecharDialog('Zerar')
+    await waitFor(() => expect(dialog()).toHaveTextContent('Esta lista não existe mais. Atualizamos a tela para você.'))
+    fecharDialog()
+    await waitFor(() => expect(window.location.hash).toBe('#/'))
+  })
+
+  it('toque no marcador enquanto os preços são zerados é ignorado', async () => {
+    await renderizarPronta()
+    let terminar: (quantidade: number) => void = () => {}
+    vi.spyOn(repositorios.itens, 'zerarPrecos').mockReturnValue(
+      new Promise<number>((resolver) => {
+        terminar = resolver
+      }),
+    )
+    const marcar = vi.spyOn(repositorios.itens, 'marcar')
+    escolherOpcao('Zerar preços')
+    fecharDialog('Zerar')
+    await waitFor(() => expect(repositorios.itens.zerarPrecos).toHaveBeenCalled())
+
+    fireEvent.click(marcador('Pimentão'))
+
+    await act(async () => {
+      terminar(6)
+    })
+    expect(marcar).not.toHaveBeenCalled()
+    expect(await concluidoNoBanco('Pimentão')).toBe(false)
+  })
+})

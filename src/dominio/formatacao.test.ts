@@ -59,3 +59,19 @@ describe('textos da tela de Listas', () => {
     )
   })
 })
+
+describe('mensagens das ações da lista', () => {
+  it('confirmação de desmarcar todos no singular e no plural', () => {
+    expect(Mensagens.detalhe.desmarcarMensagem(1)).toBe('O 1 item concluído voltará para os pendentes.')
+    expect(Mensagens.detalhe.desmarcarMensagem(4)).toBe('Os 4 itens concluídos voltarão para os pendentes.')
+  })
+
+  it('confirmação de zerar preços no singular e no plural', () => {
+    expect(Mensagens.detalhe.zerarMensagem(1)).toBe(
+      'O 1 item com preço ficará com valor unitário R$ 0,00. Essa ação não pode ser desfeita.',
+    )
+    expect(Mensagens.detalhe.zerarMensagem(5)).toBe(
+      'Os 5 itens com preço ficarão com valor unitário R$ 0,00. Essa ação não pode ser desfeita.',
+    )
+  })
+})

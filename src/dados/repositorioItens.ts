@@ -1,3 +1,4 @@
+import type { OperacaoArmazenamento } from '../dominio/erros'
 import { erroItemNaoEncontrado, ordenarItens, UNIDADE_PADRAO, validarItem, type DadosItem, type Item } from '../dominio/itens'
 import { erroListaNaoEncontrada } from '../dominio/listas'
 import type { BancoFeira, RegistroItem } from './banco'
@@ -60,6 +61,37 @@ export class RepositorioItens {
       const alterados = await this.banco.itens.update(id, { concluido: concluido ? 1 : 0 })
       if (alterados === 0) throw erroItemNaoEncontrado()
     })
+  }
+
+  // Desmarca todos os concluídos da lista de uma vez. Devolve quantos foram desmarcados.
+  desmarcarTodos(idLista: number): Promise<number> {
+    return this.alterarEmLote('desmarcar', idLista, (registro) => registro.concluido === 1, { concluido: 0 })
+  }
+
+  // Grava R$ 0,00 em todos os itens da lista que têm preço. Devolve quantos foram alterados.
+  zerarPrecos(idLista: number): Promise<number> {
+    return this.alterarEmLote('zerar', idLista, (registro) => registro.valorUnitarioCentavos > 0, {
+      valorUnitarioCentavos: 0,
+    })
+  }
+
+  // Grava uma mudança em todos os itens da lista que passam no filtro, numa única transação:
+  // se o banco falhar no meio, nenhum item muda. Devolve quantos itens foram alterados.
+  private alterarEmLote(
+    operacao: OperacaoArmazenamento,
+    idLista: number,
+    filtro: (registro: RegistroItem) => boolean,
+    mudanca: Partial<RegistroItem>,
+  ): Promise<number> {
+    return protegido(operacao, () =>
+      this.banco.transaction('rw', this.banco.listas, this.banco.itens, async () => {
+        const lista = await this.banco.listas.get(idLista)
+        if (!lista) throw erroListaNaoEncontrada()
+        const registros = await this.banco.itens.where('idLista').equals(idLista).filter(filtro).toArray()
+        await this.banco.itens.bulkUpdate(registros.map(({ id }) => ({ key: id, changes: mudanca })))
+        return registros.length
+      }),
+    )
   }
 
   async excluir(id: number): Promise<void> {
