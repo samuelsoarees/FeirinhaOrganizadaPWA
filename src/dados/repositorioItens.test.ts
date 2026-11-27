@@ -235,3 +235,79 @@ describe('obter lista', () => {
     await expect(repositorios.listas.obter(999)).rejects.toBeInstanceOf(ErroNaoEncontrado)
   })
 })
+
+// "Abacaxi" e "Pimentão" pendentes; "Tomate" e "Alface" concluídos, na ordem de inclusão.
+async function criarFeiraMista(lista = idLista): Promise<number[]> {
+  const ids = []
+  for (const [descricao, concluido] of [
+    ['Abacaxi', false],
+    ['Tomate', true],
+    ['Pimentão', false],
+    ['Alface', true],
+  ] as const) {
+    const id = await repositorios.itens.inserir(lista, { ...banana, descricao })
+    if (concluido) await repositorios.itens.marcar(id, true)
+    ids.push(id)
+  }
+  return ids
+}
+
+describe('desmarcar todos os itens da lista', () => {
+  it('desmarca os concluídos, mantém os dados e informa quantos foram desmarcados', async () => {
+    await criarFeiraMista()
+    const antes = await banco.itens.where('idLista').equals(idLista).sortBy('id')
+    expect(await repositorios.itens.desmarcarTodos(idLista)).toBe(2)
+    const depois = await banco.itens.where('idLista').equals(idLista).sortBy('id')
+    expect(depois).toEqual(antes.map((registro) => ({ ...registro, concluido: 0 })))
+  })
+
+  it('os itens voltam à ordem de inclusão', async () => {
+    await criarFeiraMista()
+    await repositorios.itens.desmarcarTodos(idLista)
+    expect((await repositorios.itens.listar(idLista)).map((item) => item.descricao)).toEqual([
+      'Abacaxi',
+      'Tomate',
+      'Pimentão',
+      'Alface',
+    ])
+  })
+
+  it('sem concluídos não muda nada e informa 0', async () => {
+    await repositorios.itens.inserir(idLista, banana)
+    const antes = await banco.itens.toArray()
+    expect(await repositorios.itens.desmarcarTodos(idLista)).toBe(0)
+    expect(await banco.itens.toArray()).toEqual(antes)
+  })
+
+  it('os itens de outras listas não mudam', async () => {
+    const outra = await repositorios.listas.inserir('Feira do mês')
+    await criarFeiraMista()
+    await criarFeiraMista(outra)
+    await repositorios.itens.desmarcarTodos(idLista)
+    expect(await banco.itens.where('idLista').equals(outra).filter((r) => r.concluido === 1).count()).toBe(2)
+  })
+
+  it('lista que não existe mais → ErroNaoEncontrado de lista', async () => {
+    await repositorios.listas.excluir(idLista)
+    const erro = await repositorios.itens.desmarcarTodos(idLista).catch((e: unknown) => e)
+    expect(erro).toBeInstanceOf(ErroNaoEncontrado)
+    expect((erro as ErroNaoEncontrado).alvo).toBe('lista')
+    expect((erro as Error).message).toBe('Esta lista não existe mais. Atualizamos a tela para você.')
+  })
+
+  it('falha no meio da gravação vira ErroArmazenamento de desmarcar e nenhum item muda', async () => {
+    for (const descricao of ['Tomate', 'Alface', 'Ovos', 'Manga']) {
+      await repositorios.itens.marcar(await repositorios.itens.inserir(idLista, { ...banana, descricao }), true)
+    }
+    const gravar = banco.itens.bulkUpdate.bind(banco.itens)
+    vi.spyOn(banco.itens, 'bulkUpdate').mockImplementation(async (mudancas) => {
+      await gravar(mudancas.slice(0, 2))
+      throw new Error('disk I/O error')
+    })
+    const erro = await repositorios.itens.desmarcarTodos(idLista).catch((e: unknown) => e)
+    expect(erro).toBeInstanceOf(ErroArmazenamento)
+    expect((erro as ErroArmazenamento).operacao).toBe('desmarcar')
+    vi.restoreAllMocks()
+    expect(await banco.itens.filter((r) => r.concluido === 1).count()).toBe(4)
+  })
+})
