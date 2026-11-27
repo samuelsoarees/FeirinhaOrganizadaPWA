@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { ErroNaoEncontrado, ErroValidacao } from './erros'
 import {
   centavosDoTextoDigitado,
+  contarComPreco,
   erroItemNaoEncontrado,
   ordenarItens,
   progressoConcluido,
@@ -174,5 +175,16 @@ describe('máscara do valor', () => {
 
   it('recusa dígitos além de R$ 99.999,99', () => {
     expect(centavosDoTextoDigitado('99.999,990')).toBeNull()
+  })
+})
+
+describe('contar itens com preço', () => {
+  it('lista vazia → 0', () => {
+    expect(contarComPreco([])).toBe(0)
+  })
+
+  it('conta só os itens com valor acima de R$ 0,00, pendentes ou concluídos', () => {
+    expect(contarComPreco([item(1, 'Alho', false, 1, 0), item(2, 'Cebola', false, 1, 400)])).toBe(1)
+    expect(contarComPreco([item(1, 'Tomate', true, 6, 120), item(2, 'Pimentão', false, 3, 200)])).toBe(2)
   })
 })

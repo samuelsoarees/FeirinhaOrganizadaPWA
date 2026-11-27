@@ -54,6 +54,11 @@ export function subtotalCentavos(item: Pick<Item, 'quantidade' | 'valorUnitarioC
   return item.quantidade * item.valorUnitarioCentavos
 }
 
+// Itens que "Zerar preços" alteraria: os que têm valor acima de R$ 0,00.
+export function contarComPreco(itens: readonly Pick<Item, 'valorUnitarioCentavos'>[]): number {
+  return itens.filter((item) => item.valorUnitarioCentavos > 0).length
+}
+
 // Pendentes primeiro e concluídos no fim; em cada grupo, a ordem de inclusão (id).
 export function compararItens(a: Item, b: Item): number {
   if (a.concluido !== b.concluido) return a.concluido ? 1 : -1

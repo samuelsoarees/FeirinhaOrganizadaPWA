@@ -68,6 +68,24 @@ export const Mensagens = {
     erroTexto: 'Verifique o armazenamento do aparelho e tente de novo.',
     tentarNovamente: 'Tentar novamente',
     falhaCarregar: 'Não foi possível carregar os itens. Tente novamente.',
+    opcoesDaLista: 'Opções da lista',
+    desmarcarTodos: 'Desmarcar todos',
+    zerarPrecos: 'Zerar preços',
+    desmarcarTitulo: 'Desmarcar todos os itens?',
+    desmarcarMensagem: (quantidade: number) =>
+      quantidade === 1
+        ? 'O 1 item concluído voltará para os pendentes.'
+        : `Os ${quantidade} itens concluídos voltarão para os pendentes.`,
+    desmarcar: 'Desmarcar',
+    zerarTitulo: 'Zerar preços?',
+    zerarMensagem: (quantidade: number) =>
+      `${quantidade === 1 ? 'O 1 item com preço ficará' : `Os ${quantidade} itens com preço ficarão`}` +
+      ' com valor unitário R$ 0,00. Essa ação não pode ser desfeita.',
+    zerar: 'Zerar',
+    nadaParaDesmarcar: 'Nenhum item concluído para desmarcar.',
+    nadaParaZerar: 'Nenhum item com preço para zerar.',
+    falhaDesmarcar: 'Não foi possível desmarcar os itens. Tente novamente.',
+    falhaZerar: 'Não foi possível zerar os preços. Tente novamente.',
   },
   itens: {
     unidade: 'UN',
